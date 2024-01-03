@@ -1,0 +1,218 @@
+body{
+    margin: 0px;
+}
+@font-face{
+    font-family: "Monserat";
+    src: url('../fonts/MontserratAlternates-Medium.otf');
+}
+#mainContent{
+    width: 100%;
+    height: 100%;
+    padding-top: 10px;
+    overflow-y: scroll;
+    padding-bottom: 10px;
+    position: relative;
+}
+#welcomeCon{
+    width: 100%;
+    border-radius: 10px;
+    height: 200px;
+    background-color: rgba(241, 122, 142,0.2);
+}
+#productCategoriesContainer{
+    margin-top: 20px;
+    width: 100%;
+    height: auto;
+    padding-top:5px;
+    padding-bottom: 5px;
+   
+    position: relative;
+}
+#productCategoriesTxt{
+    font-family: Monserat;
+    font-size: 15px;
+    margin-left: 20px;
+    display: block;
+    font-weight:bold;
+    position: relative;
+}
+#rightLogo{
+    right: 20px;
+    top:-35px;
+    width: 250px;
+    height: 150px;
+    position: absolute;
+}
+#welcomeName{
+    top:50px;
+    left:30px;
+    font-family: Monserat;
+    font-size: 20px;
+    font-weight: bolder;
+    position: absolute;
+}
+
+#welomeSubText{
+    top:85px;
+    left:30px;
+    font-size: 14px;
+    font-family: Monserat;
+    color: #7A7A7A;
+    position: absolute;
+}
+#currentStockValue{
+    top:140px;
+    left:30px;
+    font-size: 14px;
+    font-family: Monserat;
+    color: #7A7A7A;
+    position: absolute;
+}
+#currentStockValueTxt{
+    top:140px;
+    left:200px;
+    font-size: 18px;
+    font-family: Monserat;
+    color: black;
+    font-weight: 800;
+    position: absolute;
+}
+#leftSideCashCon{
+    margin-top: 5px;
+    left:10px;
+    height: 320px;
+    width:35%;
+    border-radius: 10px;
+    box-shadow:0 1px 2px 2px rgba(0,0,0,0.06);
+    background-color: white;
+    position: absolute;
+}
+#rightSideMapCon{
+    margin-top: 5px;
+    left:39%;
+    height: 320px;
+    width:60%;
+    border-radius: 10px;
+    box-shadow:0 1px 2px 2px rgba(0,0,0,0.06);
+    background-color: white;
+    position: absolute;
+}
+#secondContainer{
+    margin-top: 30px;
+    width: 100%;
+    height: 350px;
+    position: relative;
+}
+#thirdContainer{
+    margin-top: 30px;
+    left:2%;
+    width: 97%;
+    border-radius: 10px;
+    height: 350px;
+    box-shadow:0 1px 2px 2px rgba(0,0,0,0.06);
+    position: relative;
+}
+#innerThirdContainer{
+    left:2.5%;
+    width: 95%;
+    top:2.5%;
+    height: 95%;
+    position: absolute;
+}
+#cashRes{
+    left:15px;
+    top:25px;
+    font-family: Monserat;
+    position: absolute;
+}
+#cashTotalsCon{
+    top:60px;
+    left:15px;
+    width: 280px;
+    height: auto;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    position: relative;
+}
+.cashTotalItem{
+    width: 100%;
+    height: 50px;
+    margin-top: 5px;
+    background-color: white;
+    position: relative;
+}
+.cashTitle{
+    left:5px;
+    top:5px;
+    font-family: Monserat;
+    font-size: 14px;
+    color: rgba(122, 122, 122,0.5);
+    position: absolute;
+}
+.cashValue{
+    bottom: 5px;
+    right: 0px;
+    font-family: Monserat;
+    font-size: 14px;
+    position: absolute;
+}
+.divider{
+    bottom: 0px;
+    width: 100%;;
+    height: 1px;
+    background-color: rgba(122, 122, 122,0.2);
+    position: absolute;
+}
+#stockDeniedCon{
+    width:100%;
+    height: 100%;
+    display: none;
+    background-color: rgba(0,0,0,0.4);
+    position: fixed;
+}
+#stockDeniedConCenter{
+    width: 400px; 
+    height: 300px;
+    background-color:white;
+    border-radius: 5px;
+    margin: 120 auto;
+    position: relative;
+}
+.productCategoryListItem{
+    width: 98%;
+    margin-top: 10px;
+    left:1%;
+    height: 100px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow:0 1px 2px 2px rgba(0,0,0,0.06);
+    position: relative;
+}
+.productCategoryTxtItem{
+    left:15px;
+    top:15px;
+    color:#dddddd;
+    font-family: Monserat;
+    position: absolute;
+}
+.productCategoryValueTxtItem{
+    left:15px;
+    bottom:15px;
+    color: black;
+    font-size: 20px;
+    font-family: Monserat;
+    font-weight: bolder;
+    position: absolute;
+}
+.productCategoryBtn{
+    right: 15px;
+    bottom:15px;
+    width: 100px;
+    height: 40px;
+    border-radius: 20px;
+    font-family: Monserat;
+    background-color:#f17a8e;
+    color:white;
+    border-color: white;
+    position: absolute;
+}

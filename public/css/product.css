@@ -1,0 +1,362 @@
+body{
+    margin: 0px;
+    height: 100%;
+    width: 100%;
+}
+@font-face{
+    font-family: "Monserat";
+    src: url("../assets/fonts/MontserratAlternates-Medium.otf");
+}
+#mainBody{
+    left:15%;
+    width: 70%;
+    top:120px;
+    height: 60%;
+    padding-top:20px;
+    padding-bottom: 20px;
+    position: absolute;
+}
+
+#productBody{
+    width: 100%;
+    height: auto;
+    box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+    position: relative;
+}
+
+.productHead{
+    width: 100%;
+    height: 60px;
+    background-color: #dddddd;
+    position: relative;
+}
+.productContent{
+    width: 100%;
+    height: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    position: relative;
+}
+.productTitle{
+    left:20px;
+    margin-top: 20px;
+    font-family: Monserat;
+    font-size: 17px;
+    color: white;
+    position: absolute;
+}
+.addBtnCon{
+    right: 20px;
+    margin-top: 15px;
+    height: 30px;
+    width: 120px;
+    background-color:#f17a8e;
+    border-radius: 15px;
+    position: absolute;
+}
+.addBtnConIcon{
+    left:10px;
+    height: 15px;
+    margin-top: 7.5px;
+    width: 15px;
+    position: absolute;
+}
+.addBtnConLable{
+    left:30px;
+    margin-top: 7.5px;
+    font-size: 11px;
+    font-family: Monserat;
+    color: white;
+    position: absolute;
+}
+#searchBtnCon{
+    right: 160px;
+    margin-top: 15px;
+    height: 30px;
+    width: 170px;
+    background-color:white;
+    border-radius: 15px;
+    position: absolute;
+}
+#addBtnSearchEntry{
+    left:30px;
+    margin-top: 5px;
+    height: 20px;
+    font-size: 11px;
+    font-family: Monserat;
+    color: black;
+    border: none;
+    position: absolute;
+}
+#addBtnSearchEntry:focus{
+    outline: none;
+}
+.tableContainer{
+    width: 100%;
+    height: 85%;
+    overflow-y: auto;
+    position: relative;
+}
+#productCategoryTable,#productTable,#wareHouseTable,#inventoryTableStructure,#stocksTable{
+    left:2.5%;
+    width: 95%;
+    border-collapse: collapse;
+    font-family: Monserat;
+    position: absolute;
+}
+thead th {
+    position: sticky;
+    text-align: center;
+    padding: 8px;
+    background-color: white;
+    color: #dddddd;
+    height: 40px;
+    top: 0;
+}
+
+  
+td {
+    text-align: center;
+    padding: 8px;
+}
+tr{
+    height: 40px;
+}
+  
+tr:nth-child(even){background-color: #f2f2f2}
+  
+
+
+#addProductPopUp,#addCategoryPopUp,#editCategoryPopUp,#editProductPopUp,#addWareHousePopup,#assignStaffPopUp,#assignWarehousePopUp,#changeRolePopUp,#goodsRequestPopUp{
+    width:100%;
+    height: 100%;
+    display: none;
+    background-color: rgba(0,0,0,0.4);
+    position: fixed;
+}
+
+#addProductPopUpCenter{
+    width: 400px; /* Can be in percentage also. */
+    height: 470px;
+    background-color:white;
+    border-radius: 5px;
+    margin: 120 auto;
+    position: relative;
+}
+
+.addCategoryPopUpCenter{
+    width: 400px; /* Can be in percentage also. */
+    height: 250px;
+    background-color:white;
+    border-radius: 5px;
+    margin: 120 auto;
+    position: relative;
+}
+
+.addProductPopUpCenter{
+    width: 400px;
+    height: 400px;
+    background-color:white;
+    border-radius: 5px;
+    margin: 120 auto;
+    position: relative;
+}
+
+.addProductTitleCon{
+    width: 100%;
+    height: 40px;
+    margin-top: 50px;
+    text-align: center;
+    position: absolute;
+}
+
+.popUpTitle{
+    font-size: 25px;
+    color: #f17a8e;
+    font-family: Monserat;
+}
+
+.cancel{
+    right: 20px;
+    top:20px;
+    height: 20px;
+    width: 20px;
+    position: absolute;
+}
+#addProductName,#addCategoryName,#addWareHouseName{
+    margin-top: 110px;
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    position: absolute;
+}
+#addCategoryBtn{
+    margin-top: 180px;
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    position: absolute;
+}
+#addProductOrigin,#addWareHouseLocation{
+    margin-top: 170px;
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    position: absolute;
+}
+#addProductPrice,#addWareHouseBranch{
+    margin-top: 230px;
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    position: absolute;
+}
+#editCategory{
+    width: 300px;
+    height: 50px;
+    top:290px;
+    margin-left: 50px;
+    position: absolute;
+}
+#addProductBtn{
+    margin-top: 360px;
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    position: absolute;
+}
+.productCategoryContainer{
+    height: 15%;
+    width: 100%;
+    position: relative;
+}
+.productCategory{
+    margin-top: 20px;
+    right: 20px;
+    height: 30px;
+    width: 120px;
+    border-radius: 15px;
+    background-color:#f17a8e;
+    position: absolute;
+}
+.productCategoryTopDivider{
+    height: 2px;
+    width: 95%;
+    left:2.5%;
+    border-radius: 1px;
+    background-color: #dddddd;
+    position: absolute;
+}
+.productCategoryLable{
+    left:30px;
+    margin-top: 7px;
+    font-size: 12px;
+    font-family: Monserat;
+    color: white;
+    position: absolute;
+}
+#productCategoryCon,#transactionBody,#transactionHistory{
+    width: 100%;
+    height: auto;
+    display: none;
+    box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+    position: relative;
+}
+.productCategoryEditBox{
+    margin-left: 50px;
+    width: 300px;
+    height: 60px;
+    margin-top: 110px;
+    position: absolute;
+}
+.bottomDivider{
+    bottom: 0px;
+    width: 100%;
+    height: 1px;
+    background-color: #dddddd;
+    border-radius: 1px;
+    position: absolute;
+}
+.editOldValue{
+    left:10px;
+    margin-top: 20px;
+    font-size: 17px;
+    font-family: Monserat;
+    position: absolute;
+}
+.editChangeValueIcon{
+    right: 10px;
+    margin-top: 20px;
+    height: 20px;
+    width: 20px;
+    position: absolute;
+}
+#productEditBoxValueVisibility{
+    display: none;
+}
+#productCategoryEditBoxNewValue{
+    height: 60px;
+    width: 250px;
+    font-family: Monserat;
+    left:0px;
+    position: absolute;
+}
+.editProductEntry{
+    height: 60px;
+    width: 250px;
+    font-family: Monserat;
+    left:0px;
+    position: absolute;
+}
+#productCategoryEditBoxNewValueBtn{
+    margin-top: 180px;
+    left:50px;
+    height: 50px;
+    display: none;
+    width: 300px;
+    position: absolute;
+}
+#editProductBox{
+    margin-top: 100px;
+    width: 100%;
+    padding-top: 5px;
+    height: auto;
+    padding-bottom: 5px;
+    position: absolute;
+}
+.editProductBoxItem{
+    margin-top: 10px;
+    width: 100%;
+    height: 50px;
+    position: relative;
+}
+.editProductBoxLabelLayout{
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    position: absolute;
+}
+.editProductBoxLabelHiddenLayout{
+    margin-left: 50px;
+    width: 300px;
+    height: 50px;
+    display: none;
+    position: absolute;
+}
+.verticalSpacing{
+    width: 100%;
+    height: 15px;
+    position: relative;
+}
+#editProductBtnBox{
+    width: 100%;
+    height: 60px;
+    margin-top: 25px;
+    text-align: center;
+    position: relative;
+}
+#updateProductBtn{
+    width: 300px;
+    height: 50px;
+}
+
