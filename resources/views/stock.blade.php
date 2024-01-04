@@ -253,6 +253,7 @@
         }
         
         else{
+           
                var stockChangeRequest  = $.ajax({
                         url:"/updateStock",
                         method: "POST",
@@ -260,6 +261,7 @@
                             id : selectedProductId,
                             price : selectedProductPrice,
                             new_quantity : newQuantity,
+                            previous_quantity: selectedProductQuantity,
                            "_token": "{{ csrf_token() }}"
                         }
                 });
@@ -267,7 +269,7 @@
                     console.log(response);
                     if(response == "Success"){
                     Swal.fire({
-                                    title: 'Successfully confirmed stock details',
+                                    title: 'Successfully chnaged stock value',
                                     text: "",
                                     icon: 'success',
                                     showCancelButton: false,

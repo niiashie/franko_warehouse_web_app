@@ -13,6 +13,7 @@ use App\Models\WareHouseStaff;
 use App\Models\ReceivedGoods;
 use App\Models\Transaction;
 use App\Models\Stocks;
+use App\Models\StockChange;
 use App\Models\StockData;
 use Carbon\Carbon;
 
@@ -111,13 +112,14 @@ class PageController extends Controller
    
 
    public function productDetail(Request $request){
+       $wId = session('warehouse');
        $productId = $request->pid;
        
        $productName = Product::where('id',$productId)->get()->pluck('name')->first();
 
        $transCollection = collect(); 
 
-       $trans = Transaction::where('product_id',$productId)->with('products')->get();
+       $trans = Transaction::where('product_id',$productId)->where('ware_house_id',$wId)->with('products')->get();
        
        foreach($trans as $transaction){
            $transCollection->push(
@@ -132,7 +134,7 @@ class PageController extends Controller
            );
        }
 
-       $receive = ReceivedGoods::where('product_id',$productId)->with('products')->get();
+       $receive = ReceivedGoods::where('product_id',$productId)->where('ware_house_id',$wId)->with('products')->get();
        foreach($receive as $goods){
         $transCollection->push(
             [
@@ -144,6 +146,20 @@ class PageController extends Controller
                 "category" => 'received'
             ]
           );
+       }
+
+       $stock_change = StockChange::where('product_id',$productId)->where('warehouse_id',$wId)->with('products')->get();
+       foreach($stock_change as $changes){
+        $transCollection->push(
+            [
+                "name"=> $changes->products->name,
+                "cost"=> $changes->products->price,
+                "value"=> $changes->previous_quantity,
+                "date"=> $changes->created_at,
+                "quantity"=> $changes->new_quantity,
+                "category" => 'change'
+            ] 
+        );
        }
 
        $sorted = $transCollection->sortByDesc('date');
@@ -745,13 +761,21 @@ class PageController extends Controller
      $id = $request->id;
      $price = $request->price;
      $new_quantity = $request->new_quantity;
-    
+     $previous_quantity = $request->previous_quantity;
      $value = $price * $new_quantity;
 
      DB::table('products_warehouses')->where('product_id',$id)->where('ware_house_id',$wId)->update([
         'quantity'=> $new_quantity,
         'value' => $value
      ]);
+
+     $stock_change = new StockChange;
+     $stock_change->product_id = $request->id;
+     $stock_change->warehouse_id = $wId;
+     $stock_change->previous_quantity = $previous_quantity;
+     $stock_change->new_quantity = $new_quantity;
+     $stock_change->save();
+
 
      return "Success";
    }

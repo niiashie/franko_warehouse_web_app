@@ -29,7 +29,8 @@
             var transactions = response[0]['transaction'];
             console.log(transactions.length);
                   for(var i=0;i<transactions.length;i++){
-                  console.log(transactions[0]['name']);
+                     var category = transactions[i]['category'];
+                 
                   var detailCon = document.createElement('div');
                   detailCon.classList.add("detailContainer");
 
@@ -60,7 +61,14 @@
                   
                   var valueLabel = document.createElement('label');
                   valueLabel.classList.add('quantityLabel');
-                  valueLabel.innerHTML = "Value   :";
+                  if(category == "change"){
+                     valueLabel.innerHTML = "Previous:";
+                  }
+                  else{
+                     valueLabel.innerHTML = "Value   :";
+                  }
+                 
+                  
                   valueDiv.appendChild(valueLabel);
 
                   var valueQuantity = document.createElement('label');
@@ -68,16 +76,21 @@
                   valueQuantity.innerHTML = transactions[i]['value'];
                   valueDiv.appendChild(valueQuantity);
 
-                  var category = transactions[i]['category'];
+                  
                   if(category == "transaction"){
                      var image = document.createElement('img');
                      image.setAttribute("src","../icons/red_arrow.png");
                      image.classList.add("redImage");
 
                      detailCon.appendChild(image);
-                  }else{
+                  }else if(category == "received"){
                      var image2 = document.createElement('img');
                      image2.setAttribute("src","../icons/green_arrow.png");
+                     image2.classList.add("redImage");
+                     detailCon.appendChild(image2);
+                  }else{
+                     var image2 = document.createElement('img');
+                     image2.setAttribute("src","../icons/shuffle.png");
                      image2.classList.add("redImage");
                      detailCon.appendChild(image2);
                   }
@@ -120,9 +133,14 @@
                   <label class="goodsOut">Products Out</label>
                </div>
                <div id="rightArrowIndicatorCon">
-                 <img src={{ asset('icons/green_arrow.png') }} class="redArrow">
-                 <label class="goodsOut">Products In</label>
+                  <img src={{ asset('icons/green_arrow.png') }} class="redArrow">
+                  <label class="goodsOut">Products In</label>
+                </div>
+               <div id="shuffleIndicatorCon">
+                  <img src={{ asset('icons/shuffle.png') }} class="redArrow">
+                  <label class="goodsOut">Stock Change</label>
                </div>
+              
             </div>
          </div>
        </div>
