@@ -80,7 +80,7 @@ class UserController extends Controller{
             if($status!='pending'){
                 $resArr['message'] = 'Login Successful';
                 $resArr['warehouse'] = $managedWarehouse;
-                $resArr['token'] = $user->createToken('api-application')->accessToken;
+                $resArr['token'] = $user->createToken('API Token')->plainTextToken;
                 $resArr['user'] = $user;
             }
             else{
