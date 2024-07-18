@@ -17,6 +17,7 @@ class CreateStockDataTable extends Migration
             $table->id();
             $table->string('stock_id');
             $table->string('product_id');
+            $table->string('category_id');
             $table->decimal('old_quantity');
             $table->decimal('new_quantity');
             $table->decimal('difference_quantity');

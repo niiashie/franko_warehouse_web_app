@@ -187,7 +187,8 @@
 @yield('pageJs')
 <body>
     <div id="mainBody">
-       @yield('pageContent')
+   
+     @yield('pageContent')
     </div>
     <div id="warehouse0PopUp">
       <div id="warehousePopUpCenter">

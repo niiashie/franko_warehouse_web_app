@@ -183,4 +183,15 @@ class ProductController extends Controller
 
         echo "Success";                 
     }
+
+   public function getCategoryProducts(String $id){
+        return ProductCategories::where('id',$id)->with(['products' => function($query){
+        $query->with('warehouses');
+        }])->get();
+      
+    }
+
+    public function productCategorList(){
+        return ProductCategories::all();
+    }
 }

@@ -9,6 +9,85 @@
     width: 90%;
     position: absolute;
 }
+.tableContainer{
+    width: 100%;
+    height: 85%;
+    overflow-y: auto;
+    position: relative;
+}
+#productCategoryTable,#productTable,#wareHouseTable,#inventoryTableStructure,#stocksTable{
+    left:2.5%;
+    width: 95%;
+    border-collapse: collapse;
+    font-family: Monserat;
+    position: absolute;
+}
+thead th {
+    position: sticky;
+    text-align: center;
+    padding: 8px;
+    background-color: white;
+    color: #dddddd;
+    height: 40px;
+    top: 0;
+}
+
+  
+td {
+    text-align: center;
+    padding: 8px;
+}
+tr{
+    height: 40px;
+}
+  
+tr:nth-child(even){background-color: #f2f2f2}
+  
+
+#productBody{
+    width: 100%;
+    height: auto;
+    box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+    position: relative;
+}
+.productHead{
+    width: 100%;
+    height: 60px;
+    background-color: #dddddd;
+    position: relative;
+}
+.productTitle{
+    left:20px;
+    margin-top: 20px;
+    font-family: Monserat;
+    font-size: 17px;
+    color: white;
+    position: absolute;
+}
+.addBtnCon{
+    right: 20px;
+    margin-top: 15px;
+    height: 30px;
+    width: 120px;
+    background-color:#f17a8e;
+    border-radius: 15px;
+    position: absolute;
+}
+.addBtnConIcon{
+    left:10px;
+    height: 15px;
+    margin-top: 7.5px;
+    width: 15px;
+    position: absolute;
+}
+.addBtnConLable{
+    left:30px;
+    margin-top: 7.5px;
+    font-size: 11px;
+    font-family: Monserat;
+    color: white;
+    position: absolute;
+}
 #box1{
     width: 25%;
     height: 100%;
@@ -74,6 +153,20 @@
     background-color:#f17a8e;
     border-radius: 15px;
     position: absolute;
+}
+.productContent{
+    width: 100%;
+    height: 85%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+   
+    position: relative;
+}
+.tableContainer{
+    width: 100%;
+    height: 85%;
+    overflow-y: auto;
+    position: relative;
 }
 #modifyStock{
     right: 300px;

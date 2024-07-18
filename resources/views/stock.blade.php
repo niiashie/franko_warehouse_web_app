@@ -2,7 +2,7 @@
 
 @section('pageCss')
     <link rel="stylesheet" href={{ asset('css/stock.css') }} />
-    <link rel="stylesheet" href={{ asset('css/product.css') }} />
+    {{-- <link rel="stylesheet" href={{ asset('css/product.css') }} /> --}}
 @endsection
 
 @section('pageMenu')
@@ -82,7 +82,7 @@
 
      $(document).ready(function() {
         getProductList2();
-        modifyStock();
+        stockDetails();
      });
 
 
@@ -444,10 +444,10 @@
             <img class="addBtnConIcon" src="/icons/white_print.png">
             <label class="addBtnConLable">Print Stock</label>
           </div>
-          <div id="modifyStock" onclick="modifyStock()">
+          {{-- <div id="modifyStock" onclick="modifyStock()">
             <img class="addBtnConIcon" src="/icons/list.png">
             <label class="addBtnConLable">Modify Stock</label>
-          </div>
+          </div> --}}
           <div id='stockStatusCon'>
              <label id="stockStatus">Hi</label>
 
@@ -545,7 +545,7 @@
                 </script>
             </div>
        </div>
-       <div id="stockChangeCon" class="productContent">
+       {{-- <div id="stockChangeCon" class="productContent">
          <div id="stockSearchContainer">
             <input id="stockSearchEntry" type="text" placeholder="Enter Product name">            
          </div>
@@ -568,7 +568,7 @@
                 <label class="addBtnConLable">Stock Table</label>
             </div>
          </div>
-       </div>
+       </div> --}}
    </div>
 
 @endsection

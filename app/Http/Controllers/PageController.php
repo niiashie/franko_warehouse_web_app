@@ -57,7 +57,8 @@ class PageController extends Controller
         $checkPresence = Stocks::where([['ware_house_id', '=', $wId]])
             ->where(function($q){
                     $q->where('status', '=', 'pending')
-                    ->orWhere('status', '=','confirmed');
+                    ->orWhere('status', '=','confirmed')
+                    ->orWhere('status', '=','ready');
             })->get();
 
         if (!$checkPresence->isEmpty()) {
@@ -68,18 +69,21 @@ class PageController extends Controller
             $stockId = Stocks::where([['ware_house_id', '=', $wId]])
             ->where(function($q){
                     $q->where('status', '=', 'pending')
+                    ->orWhere('status', '=','ready')
                     ->orWhere('status', '=','confirmed');
             })->get()->pluck('id')->first();
 
             $status = Stocks::where([['ware_house_id', '=', $wId]])
             ->where(function($q){
                     $q->where('status', '=', 'pending')
+                    ->orWhere('status', '=','ready')
                     ->orWhere('status', '=','confirmed');
             })->get()->pluck('status')->first();
             
             $stockDate =  Stocks::where([['ware_house_id', '=', $wId]])
             ->where(function($q){
                     $q->where('status', '=', 'pending')
+                    ->orWhere('status', '=','ready')
                     ->orWhere('status', '=','confirmed');
             })->get()->pluck('created_at')->first();
 

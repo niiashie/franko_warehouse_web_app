@@ -14,6 +14,8 @@ use App\Models\WareHouseStaff;
 use App\Models\User;
 use App\Models\Stocks;
 use App\Models\StockData;
+use App\Models\StockCategory;
+use App\Models\ProductCategories;
 use Carbon\Carbon;
 use App\Models\Requisition;
 use Exception;
@@ -229,6 +231,7 @@ class UserController extends Controller{
       $resArray = [];  
       $stock_taker_id = $request->stock_taker_id;
       $ware_house_id = $request->ware_house_id;
+      $pending_stock_id = $request->pending_stock_id;
       $stock_obj = json_decode($request->stock_values);
       $counter = 0;
 
@@ -238,6 +241,8 @@ class UserController extends Controller{
                 ->orWhere('status', '=','confirmed');
         })->get();
        if ($pendingStocks->isEmpty()) {
+            
+            
             $currentStock = new Stocks;
             $currentStock->stock_taker_id = $stock_taker_id;
             $currentStock->ware_house_id = $ware_house_id;
@@ -275,16 +280,108 @@ class UserController extends Controller{
                 }
 
                 $resArr['message'] = "Stock submitted successfully";
+                $resArr['pending_stock_id'] = $insertId;
                 
 
             }
-       }else{
+       }
+       else if($pending_stock_id != null){
+        foreach($stock_obj as $obj){
+            $product_id = $obj->product_id;
+            $price = $obj->price;
+            $old_quantity = $obj->old_value;
+            $new_quantity = $obj->new_value;
+            $difference = $old_quantity - $new_quantity;
+
+            $old_value = $old_quantity * $price;
+            $new_value = $new_quantity * $price;
+            $difference_value = $difference * $price;
+
+            $stockData = new StockData;
+            $stockData->stock_id = $pending_stock_id;
+            $stockData->product_id = $product_id;
+            $stockData->old_quantity = $old_quantity;
+            $stockData->new_quantity = $new_quantity;
+            $stockData->difference_quantity = $difference;
+            $stockData->old_value = $old_value;
+            $stockData->new_value = $new_value;
+            $stockData->difference_value = $difference_value;
+
+            $stockData->save();
+            $resArr['message'] = "Stock submitted successfully";
+            $resArr['pending_stock_id'] = $insertId;
+        }
+       }
+       else{
+         
          $resArr['message'] = 'Current warehouse has pending stock';
        }
-      /*foreach($stock_obj as $obj){
-        $counter = $counter + 1;
-      }*/
+    
       return response()->json($resArr);
+    }
+
+    public function postCategoryStockData(Request $request){
+      $stock_id = $request->stock_id;
+      $category_id = $request->category_id;
+      $stock_obj = json_decode($request->stock_values);
+      $has_multiple = $request->has_multiple;
+
+      //Check if categories have been placed
+      $categoryCheck = StockCategory::where('category_id',$category_id);
+      if ($categoryCheck->first() && $has_multiple == false) { 
+        $resArr['message'] = "Product category already submitted for stock";
+        return response()->json($resArr,400); 
+      }
+      else{
+        foreach($stock_obj as $obj){
+            $product_id = $obj->product_id;
+            $price = $obj->price;
+            $old_quantity = (int)$obj->old_value;
+            $new_quantity = (int)$obj->new_value;
+            $difference =  $new_quantity - $old_quantity;
+    
+            $old_value = $old_quantity * $price;
+            $new_value = $new_quantity * $price;
+            $difference_value = $difference * $price;
+          
+            $stockData = new StockData;
+            $stockData->stock_id = $stock_id;
+            $stockData->product_id = $product_id;
+            $stockData->category_id = $category_id;
+            $stockData->old_quantity = $old_quantity;
+            $stockData->new_quantity = $new_quantity;
+            $stockData->difference_quantity = $difference;
+            $stockData->old_value = $old_value;
+            $stockData->new_value =  $new_value;
+            $stockData->difference_value = $difference_value;
+    
+            $stockData->save();
+    
+          }
+          //Insert into stock categories
+          if($has_multiple){
+            $check = StockCategory::where('stock_id',$stock_id)->where('category_id',$category_id)->get();
+            if(!$check->first()){
+                $stockCategory = new StockCategory;
+                $stockCategory->stock_id = $stock_id;
+                $stockCategory->category_id = $category_id;
+                $stockCategory->save();
+            }
+          }
+          else{
+            $stockCategory = new StockCategory;
+            $stockCategory->stock_id = $stock_id;
+            $stockCategory->category_id = $category_id;
+            $stockCategory->save();
+          }
+          
+    
+          $resArr['message'] = 'Successfully submitted stock values for this product category';
+          return response()->json($resArr,200); 
+      }
+
+
+    
     }
 
     public function getConfirmedStocks(){
@@ -348,8 +445,101 @@ class UserController extends Controller{
             return response()->json($resArr,200); 
         }catch(Exception $e) {
             $resArr['message'] = "Stock Approval Failed";
+            return response()->json($resArr,400); 
+        }
+    }
+
+    public function getPendingStock(String $id){
+      $pending_stock = Stocks::where('ware_house_id',$id)->where('status','pending')->get(); 
+      $resArr['pending_stock'] = $pending_stock;
+      if($pending_stock->first()){
+        $categories = StockCategory::where('stock_id',$pending_stock[0]->id)->with('category')->get();
+        
+        //check if all categories have been submitted
+        if(sizeof($categories) == sizeof(ProductCategories::all())){
+            Stocks::where('id', $pending_stock[0]->id)->update(['status' => "ready"]);
+        }
+        $resArr['categories'] = $categories;
+        return response()->json($resArr,200); 
+      }
+      else{
+        //check if submitted to accounts
+        $ready_stock = Stocks::where('ware_house_id',$id)->where('status','ready')->get(); 
+        if($ready_stock->first()){
+          $resArr['pending_stock'] = $ready_stock;
+          $categories = StockCategory::where('stock_id',$ready_stock[0]->id)->with('category')->get();
+          $resArr['categories'] = $categories;
+        }
+        return response()->json($resArr,200);  
+      } 
+     
+     // return $pending_stock;
+    
+    }
+
+    public function initiateStock(Request $request){
+        
+      $warehouse_id = $request->warehouse_id;
+      $initator_id = $request->initiator_id;
+    
+      try{
+        
+        //Check for pending stock
+        $stock = Stocks::where("ware_house_id",$warehouse_id)->where('status','pending')->get();
+        if ($stock->first()) { 
+          $resArr['message'] = "Warehouse has a pending stock";
+          return response()->json($resArr,400); 
+        }else{
+            $currentStock = new Stocks;
+        $currentStock->stock_taker_id = $initator_id;
+        $currentStock->ware_house_id = $warehouse_id;
+        $currentStock->status = 'pending';
+
+        $currentUserSave = $currentStock->save();
+
+        if($currentUserSave){
+            $insert_id = $currentStock->id;
+            $resArr['message'] = "Success";
+            $resArr['stock_id'] = $insert_id;
             return response()->json($resArr,200); 
         }
+        } 
+
+        
+      }catch(Exception $e) {
+        $resArr['message'] = "An error occured in initiating stock";
+        return response()->json($resArr,400); 
+       }
+      
+
+    }
+
+    public function getPendingStockCategories(String $id){
+      $stock_categories = StockCategory::where('stock_id',$id)->get();
+      $product_categories = ProductCategories::all();
+      //echo sizeof($stock_categories);
+      $result_array = []; 
+      foreach($product_categories as $obj){
+        $counter = 0;
+        foreach($stock_categories as $obj2){
+           
+            if($obj->id == $obj2->category_id){
+                $counter++;
+            }
+        }
+        if($counter == 0){
+          array_push($result_array,$obj);
+        }
+      }
+
+      return response()->json($result_array,200);
+
+    }
+
+    public function getProductCategoryStock(String $id){
+      return ProductCategories::where('id',$id)->with(['products' => function($query){
+        $query->with('warehouses');
+        }])->get();
     }
 
 }
