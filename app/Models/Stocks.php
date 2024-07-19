@@ -10,7 +10,7 @@ class Stocks extends Model
     use HasFactory;
 
     public function admin(){
-        return $this->belongsTo(Admin::class, "stock_taker_id");
+        return $this->belongsTo(User::class, "stock_taker_id");
     }
 
     public function warehouse(){

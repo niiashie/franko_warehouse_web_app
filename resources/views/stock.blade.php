@@ -455,7 +455,10 @@
           <script>
             var status = "{{ $status }}";
             if(status == "pending"){
-               document.getElementById('stockStatus').innerHTML = "Pending Confirmation"
+               document.getElementById('stockStatus').innerHTML = "Incomplete Stock Record";
+            }
+            else if(status == "ready"){
+                document.getElementById('stockStatus').innerHTML = "Complete Stock Record";
             }
             else{
                 document.getElementById('stockStatus').innerHTML = "Awaiting Approval"

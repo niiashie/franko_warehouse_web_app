@@ -330,9 +330,10 @@ class UserController extends Controller{
       $categoryCheck = StockCategory::where('category_id',$category_id);
       if ($categoryCheck->first() && $has_multiple == false) { 
         $resArr['message'] = "Product category already submitted for stock";
-        return response()->json($resArr,400); 
+        return response()->json($resArr); 
       }
       else{
+        
         foreach($stock_obj as $obj){
             $product_id = $obj->product_id;
             $price = $obj->price;
@@ -441,39 +442,55 @@ class UserController extends Controller{
                         ]
                     );
             }
+          
             $resArr['message'] = "Success";
+
             return response()->json($resArr,200); 
         }catch(Exception $e) {
             $resArr['message'] = "Stock Approval Failed";
-            return response()->json($resArr,400); 
+            return response()->json($resArr); 
         }
     }
 
     public function getPendingStock(String $id){
-      $pending_stock = Stocks::where('ware_house_id',$id)->where('status','pending')->get(); 
+      $pending_stock = Stocks::where('ware_house_id',$id)->where('status','pending')->orwhere('status','ready')->orwhere('status','confirmed')->get(); 
       $resArr['pending_stock'] = $pending_stock;
       if($pending_stock->first()){
         $categories = StockCategory::where('stock_id',$pending_stock[0]->id)->with('category')->get();
         
         //check if all categories have been submitted
-        if(sizeof($categories) == sizeof(ProductCategories::all())){
+        if(sizeof($categories) == sizeof(ProductCategories::all()) && $pending_stock[0]->status == "pending"){
             Stocks::where('id', $pending_stock[0]->id)->update(['status' => "ready"]);
         }
         $resArr['categories'] = $categories;
         return response()->json($resArr,200); 
+      }else{
+        $resArr['pending_stock'] = [];
+        $resArr['categories'] = [];
+        return response()->json($resArr,200);
       }
-      else{
-        //check if submitted to accounts
-        $ready_stock = Stocks::where('ware_house_id',$id)->where('status','ready')->get(); 
-        if($ready_stock->first()){
-          $resArr['pending_stock'] = $ready_stock;
-          $categories = StockCategory::where('stock_id',$ready_stock[0]->id)->with('category')->get();
-          $resArr['categories'] = $categories;
-        }
-        return response()->json($resArr,200);  
-      } 
+    //   else{
+    //     //check if submitted to accounts
+    //     $ready_stock = Stocks::where('ware_house_id',$id)->where('status','ready')->get(); 
+    //     if($ready_stock->first()){
+    //       $resArr['pending_stock'] = $ready_stock;
+    //       $categories = StockCategory::where('stock_id',$ready_stock[0]->id)->with('category')->get();
+    //       $resArr['categories'] = $categories;
+    //       return response()->json($resArr,200);
+    //     }
+    //     else{
+    //       $confirmed_stock = Stocks::where('ware_house_id',$id)->where('status','confirmed')->get(); 
+    //       if($confirmed_stock->first()){
+    //         $resArr['pending_stock'] = $ready_stock;
+    //         $categories = StockCategory::where('stock_id',$ready_stock[0]->id)->with('category')->get();
+    //         $resArr['categories'] = $categories;
+    //         return response()->json($resArr,200);
+    //       }
+    //     }
+         
+    //   } 
      
-     // return $pending_stock;
+   
     
     }
 
@@ -488,7 +505,7 @@ class UserController extends Controller{
         $stock = Stocks::where("ware_house_id",$warehouse_id)->where('status','pending')->get();
         if ($stock->first()) { 
           $resArr['message'] = "Warehouse has a pending stock";
-          return response()->json($resArr,400); 
+          return response()->json($resArr); 
         }else{
             $currentStock = new Stocks;
         $currentStock->stock_taker_id = $initator_id;
@@ -508,7 +525,7 @@ class UserController extends Controller{
         
       }catch(Exception $e) {
         $resArr['message'] = "An error occured in initiating stock";
-        return response()->json($resArr,400); 
+        return response()->json($resArr); 
        }
       
 
@@ -540,6 +557,23 @@ class UserController extends Controller{
       return ProductCategories::where('id',$id)->with(['products' => function($query){
         $query->with('warehouses');
         }])->get();
+    }
+
+    public function deleteStock(){
+
+        try{
+            Stocks::truncate();
+            StockCategory::truncate();
+            StockData::truncate();
+
+            $resArr['message'] = "Success";
+            return response()->json($resArr); 
+        }catch(Exception $e) {
+            $resArr['message'] = "Stock Cancel Failed";
+            return response()->json($resArr); 
+        }
+      
+
     }
 
 }

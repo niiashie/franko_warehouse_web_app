@@ -44,4 +44,5 @@ Route::middleware('auth:sanctum')->post('/initiateStock',[UserController::class,
 Route::middleware('auth:sanctum')->get('/getPendingStockCategories/{id}',[UserController::class,'getPendingStockCategories']);
 Route::middleware('auth:sanctum')->get('/getProductCategoryStock/{id}',[UserController::class,'getProductCategoryStock']);
 Route::middleware('auth:sanctum')->post('/postCategoryStockData',[UserController::class,'postCategoryStockData']);
+Route::middleware('auth:sanctum')->delete('/deleteStock',[UserController::class,'deleteStock']);
 
