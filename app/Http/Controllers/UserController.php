@@ -140,7 +140,7 @@ class UserController extends Controller{
         if($wId != null){
             $today = Transaction::where('ware_house_id',$wId)->whereDate('created_at', Carbon::today())->with('products')->get();
        
-            $posts = Transaction::where('ware_house_id',$wId)->with(['products','warehouse'])->orderBy('created_at','DESC')->get()->groupBy(function($item) {
+            $posts = Transaction::where('ware_house_id',$wId)->with(['products','warehouse'])->orderBy('created_at','DESC')->take(200)->get()->groupBy(function($item) {
              return $item->created_at->format('Y-m-d');
             });
 
@@ -163,7 +163,7 @@ class UserController extends Controller{
         if($wId != null){
             $today = ReceivedGoods::where('ware_house_id',$wId)->whereDate('created_at', Carbon::today())->with('products')->get();
 
-            $posts = ReceivedGoods::where('ware_house_id',$wId)->with(['products','warehouse'])->orderBy('created_at','DESC')->get()->groupBy(function($item) {
+            $posts = ReceivedGoods::where('ware_house_id',$wId)->with(['products','warehouse'])->orderBy('created_at','DESC')->take(250)->get()->groupBy(function($item) {
                 return $item->created_at->format('Y-m-d');
             });
 
@@ -573,6 +573,40 @@ class UserController extends Controller{
             return response()->json($resArr); 
         }
       
+
+    }
+
+    public function getStockCategoryDetails(Request $request){
+       $stock_id = $request->stock_id;
+       $category_id = $request->category_id;
+
+       return StockData::where('stock_id',$stock_id)->where('category_id',$category_id)->with('products')->get();
+    }
+
+    public function updatePendingStockCount(Request $request){
+      $stock_data_id = $request->stock_data_id;
+      $number = $request->number;
+      $price = $request->price;
+
+
+
+      $stock_data = StockData::where('id',$stock_data_id)->first();
+      $previous_number = $stock_data->old_quantity;
+      $difference =  $number - $previous_number; 
+      $difference_value = $difference * $price;
+      $new_value = $price * $number;
+
+      StockData::where('id',$stock_data_id)->update(
+        [
+            'new_quantity' => $number,
+            'difference_quantity' => $difference,
+            'new_value' => $new_value,
+            'difference_value'=> $difference_value
+        ]
+        );
+
+        $resArr['message'] = "Success";
+        return response()->json($resArr); 
 
     }
 
