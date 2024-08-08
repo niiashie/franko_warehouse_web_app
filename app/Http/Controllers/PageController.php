@@ -253,7 +253,7 @@ class PageController extends Controller
 
        $today = Transaction::where('ware_house_id',$wId)->whereDate('created_at', Carbon::today())->with('products')->get();
        
-       $posts = Transaction::where('ware_house_id',$wId)->whereDate('created_at', Carbon::today())->get()->groupBy(function($item) {
+       $posts = Transaction::where('ware_house_id',$wId)->take(500)->latest()->get()->groupBy(function($item) {
         return $item->invoice_no;
        });
 

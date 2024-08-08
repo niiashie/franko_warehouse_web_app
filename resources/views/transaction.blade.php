@@ -129,7 +129,7 @@
 
         
         if(d == "retail_requisition"){
-           parentCon.appendChild(invoiceNoInput);
+           //parentCon.appendChild(invoiceNoInput);
            parentCon.appendChild(dateNoInput);
            parentCon.appendChild(makeTransactionBtn);
            transactionType = "Retail Requisition";       
@@ -137,14 +137,14 @@
         }
         else if(d == "warehouse_requisition"){
            parentCon.appendChild(warehouseInput); 
-           parentCon.appendChild(invoiceNoInput);
+           //parentCon.appendChild(invoiceNoInput);
            parentCon.appendChild(dateNoInput);
            parentCon.appendChild(makeTransactionBtn);
            transactionType = "Kumasi Requisition";
         }
         else if(d == "customer_cash_sales" || d == "customer_credit_sales"){
            parentCon.appendChild(customerNameInput); 
-           parentCon.appendChild(invoiceNoInput);
+           //parentCon.appendChild(invoiceNoInput);
            parentCon.appendChild(dateNoInput);
            parentCon.appendChild(makeTransactionBtn);
 
@@ -456,9 +456,9 @@
         if(transactionType == ""){
            showError("Error","Please select transaction type to proceed");
         }
-        else if(transactionInvoiceNumber == ""){
-            showError("Error","Please enter transaction invoice number to proceed");
-        }
+        // else if(transactionInvoiceNumber == ""){
+        //     showError("Error","Please enter transaction invoice number to proceed");
+        // }
         else if(transactionDate == ""){
             showError("Error","Please select transaction date to proceed"); 
         }
@@ -598,7 +598,7 @@
           '<h3>'+wName+'('+wLocation+')</h3>'+
           '</div>'+
           '<div style="width:100%;height:auto;top:80px;text-align:center;position:absolute">'
-          +'<h3>'+date+'</h3>'+
+          +'<h3>'+""+'</h3>'+
           '</div>'
         );
 
@@ -1003,6 +1003,7 @@
                                             var selectedDate = "{{ $row->created_at }}";
                                             
                                             document.getElementById("transactionHistoryTodayDate").innerHTML = restructureDate(selectedDate);
+                                            document.getElementById("transactionHistoryTodayDate").style.display = "none";
                                             inventoryItems.push(obj);
                                             wName = "{{ $row->warehouse->wname }}";
                                             wLocation = "{{ $row->warehouse->wlocation }}"

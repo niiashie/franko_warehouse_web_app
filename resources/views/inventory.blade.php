@@ -84,7 +84,7 @@
             function receiveGoods(){
                 document.getElementById("productBody").style.display = "none";
                 document.getElementById("addGoodsBody").style.display = "block";
-                document.getElementById("goodsReceptionBlockPopUp").style.display = "block";
+                document.getElementById("goodsReceptionBlockPopUp").style.display = "none";
                 if(goodsReceptionStatus == "pending"){
                     document.getElementById("goodsReceptionBlockPopUp").style.display = "none";
                     document.getElementById('goodsReceptionSentPopUp').style.display = "block";
@@ -506,7 +506,7 @@
 
         function checkGoodsReceptionPermission(){
         var warehouseReception = localStorage.getItem('ware_house_received_goods');
-        console.log("warehouse: "+warehouseReception);
+        //console.log("warehouse: "+warehouseReception);
             dbRef = firebase.database().ref();
 
             dbRef.child("franko_ware_house/goods_reception").child(warehouseReception).on('value', (snapshot) => {
