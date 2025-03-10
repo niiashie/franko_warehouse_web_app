@@ -103,7 +103,8 @@ class WarehouseController extends Controller
 
             return back()->with('ware_house_addition', $result2);
 
-         }else{
+         }
+         else{
             return back()->withErrors(['Please check Internet connection', '']);
          }
 

@@ -16,4 +16,8 @@ class ReceivedGoods extends Model
     public function warehouse(){
         return $this->belongsTo(WareHouse::class,'ware_house_id');
     }
+
+    public function admin(){
+        return $this->belongsTo(Admin::class, "user_id");
+    }
 }

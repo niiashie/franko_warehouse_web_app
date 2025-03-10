@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('stock_changes', function (Blueprint $table) {
             $table->id();
             $table->string('product_id');
+            $table->integer('user_id');
             $table->string('warehouse_id');
             $table->integer('previous_quantity');
             $table->integer('new_quantity');

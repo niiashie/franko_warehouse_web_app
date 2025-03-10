@@ -12,4 +12,8 @@ class StockData extends Model
     public function products(){
         return $this->belongsTo(Product::class, "product_id");
     }
+
+    public function stock(){
+       return $this->belongsTo(Stocks::class,"stock_id"); 
+    }
 }

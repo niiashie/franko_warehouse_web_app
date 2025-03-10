@@ -16,6 +16,7 @@ class CreateReceivedGoodsTable extends Migration
         Schema::create('received_goods', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('product_id');
+            $table->integer('user_id');
             $table->integer('ware_house_id');
             $table->integer('requisition_id');
             $table->integer('quantity');

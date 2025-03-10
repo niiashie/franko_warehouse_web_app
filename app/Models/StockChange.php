@@ -12,4 +12,8 @@ class StockChange extends Model
     public function products(){
         return $this->belongsTo(Product::class,'product_id');
     }
+
+    public function admin(){
+        return $this->belongsTo(Admin::class, "user_id");
+    }
 }
