@@ -256,6 +256,19 @@
     top:10px;
     position: relative;
 }
+.reverseTransactionBTN{
+    width: 100px;
+    height: 30px;
+    background-color: #f17a8e;
+    color: white;
+    right: 20px;
+    border-radius: 10px;
+    text-align: center;
+    top:5px;
+    position: absolute;
+
+}
+
 .inventoryHistoryDateHeading{
     font-family: Monserat;
     color:black;

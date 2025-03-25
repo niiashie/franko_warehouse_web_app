@@ -65,5 +65,16 @@ Route::middleware('auth:sanctum')->get('web/getProduct',[WebController::class,'g
 Route::middleware('auth:sanctum')->get('web/getProductCategories',[WebController::class,'getProductCategories']);
 Route::middleware('auth:sanctum')->post("web/createProduct",[WebController::class,'createProduct']);
 Route::middleware('auth:sanctum')->patch('web/updateProduct/{id}', [WebController::class, 'updateProduct']);
-Route::middleware('auth:sanctum')->post('web/getProductMovement',[WebController::class,'getProductMovement']);
+Route::middleware('auth:sanctum')->post('web/productMovement',[WebController::class,'getProductMovement']);
+Route::middleware('auth:sanctum')->get('web/getStockTakings',[WebController::class,'getStockTakings']);
+Route::middleware('auth:sanctum')->get('web/getProductStockBalance',[WebController::class,'getProductStockBalance']);
+Route::middleware('auth:sanctum')->post('web/addProductCategories',[WebController::class,'addProductCategories']);
+Route::middleware('auth:sanctum')->get('web/getWarehouseInventory/{id}',[WebController::class,'getWarehouseInventory']);
+Route::middleware('auth:sanctum')->get('web/getAllProducts/{id}',[WebController::class,'getAllProducts']);
+Route::middleware('auth:sanctum')->post('web/sendRequisition',[WebController::class,'sendRequisition']);
+Route::middleware('auth:sanctum')->get('web/getRequisition/{id}',[WebController::class,'getRequisition']);
+Route::middleware('auth:sanctum')->get('web/getRequisitionProducts/{id}',[WebController::class,'getRequisitionProducts']);
+Route::middleware('auth:sanctum')->get('web/rejectRequisition/{id}',[WebController::class,'rejectRequisition']);
+Route::middleware('auth:sanctum')->post('web/acceptRequisition',[WebController::class,'acceptRequisition']);
+Route::middleware('auth:sanctum')->get('web/getTransactions',[WebController::class,'getTransactions']);
 

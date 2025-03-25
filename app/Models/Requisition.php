@@ -12,4 +12,8 @@ class Requisition extends Model
     public function warehouse(){
         return $this->belongsTo(WareHouse::class,'warehouse_id');
     }
+
+    public function approver(){
+        return $this->belongsTo(Admin::class,'approver_id');
+    }
 }

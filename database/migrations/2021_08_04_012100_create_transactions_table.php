@@ -25,6 +25,8 @@ class CreateTransactionsTable extends Migration
             $table->string('transaction_type');
             $table->string('ware_house_name');
             $table->string('customer_name');
+            $table->integer('customer_id');
+            $table->enum('status', ['unpaid', 'paid', 'reversed'])->default('unpaid');
             $table->timestamps();
         });
     }

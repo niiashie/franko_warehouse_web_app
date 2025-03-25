@@ -125,7 +125,10 @@
         makeTransactionBtn.classList.add('buttonDesign');
         makeTransactionBtn.id = "transactionButton";
         makeTransactionBtn.innerHTML = "Make Transaction";
-        makeTransactionBtn.onclick = function() { addToStock(); };
+        makeTransactionBtn.onclick = function() {
+
+             addToStock(); 
+        };
 
         
         if(d == "retail_requisition"){
@@ -452,7 +455,7 @@
     }
 
     function addToStock(){
-        
+        console.log("called");
         if(transactionType == ""){
            showError("Error","Please select transaction type to proceed");
         }
@@ -499,6 +502,7 @@
             resultArray = {
                 "products":productsArray,
                 "warehouse_id":"{{ session()->get('warehouse') }}",
+                "user_id":"{{ session()->get('id') }}",
                 "transaction_type":transactionType,
                 "transaction_invoice":transactionInvoiceNumber,
                 "transaction_date": transactionDate,
@@ -575,6 +579,64 @@
         
     
         //alert(json);
+    }
+
+    function reverseTransaction(invoiceNo){
+        Swal.fire({
+                    title: 'Reverse Transaction',
+                    text: "Do you really want to reverse this transaction",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0093E9',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Reverse Transaction'
+                }).then((result) => {  
+                    if (result.value) {
+                        document.getElementById("loading").style.display = "block";
+                        var inventoryRequest  = $.ajax({
+                                                    url:"/reverse",
+                                                    method: "GET",
+                                                    data: {
+                                                        invoiceNumber:invoiceNo
+                                                    }
+                        });
+                        inventoryRequest.done(function (response, textStatus, jqXHR){
+                            console.log("Response is :"+ response);
+                            if(response == 'Success'){
+                                document.getElementById("loading").style.display = "none";
+                                Swal.fire({
+                                        title: 'Transaction Reversal Successful',
+                                        text: "",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonColor: '#3085d6',
+                                        confirmButtonText: 'Okay'
+                                    }).then((result) => {
+                                                                    if (result.value) {
+                                                                        location.reload();
+                                                                    
+                                                }
+                                                            
+                                });
+                            }else{
+                                document.getElementById("loading").style.display = "none";
+                                console.log("Running transaction Error");
+                                showError("Error",response);
+                            }
+                        });
+
+                        inventoryRequest.fail(function (){
+                            document.getElementById("loading").style.display = "none";
+                            // Show error
+                            showError("Failure","Please ensure server is active");
+                        });
+
+
+                    }
+
+                });
+                
+    
     }
 
     function printTransaction(wName,wLocation){
@@ -965,6 +1027,10 @@
                                <label class="inventoryHistoryDateHeading">
                                    #{{ $key }}
                                </label>
+                               @if(session()->get('role') =='Director')
+                                    <button onclick="reverseTransaction('{{ $key }}')" class="reverseTransactionBTN">Reverse</button>
+                               @endif
+                               
                            </div>
                            <table class="inventoryTableList">
                                 <thead>

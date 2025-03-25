@@ -67,6 +67,7 @@ Route::get('/requestRequisition',[InventoryController::class,'requestRequisition
 
 //Transaction
 Route::get('/transact',[TransactionController::class,'transact']);
+Route::get('/reverse',[TransactionController::class,'reverse']);
 Route::get('/todayTransaction',[TransactionController::class,'todayTrans']);
 Route::get('/checkApi',[UserController::class,'managedWareHouses']);
 Route::get('/productList',[PageController::class,'getProductList']);

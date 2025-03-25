@@ -16,6 +16,7 @@ class CreateRequisitionsTable extends Migration
         Schema::create('requisitions', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('warehouse_id');
+            $table->integer('approver_id')->nullable();
             $table->string('reason');
             $table->string('status');
             $table->timestamps();

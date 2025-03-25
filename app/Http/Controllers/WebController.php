@@ -10,6 +10,7 @@ use App\Models\Requisition;
 use App\Models\Product;
 use App\Models\StockChange;
 use App\Models\StockData;
+use App\Models\Stocks;
 use App\Models\Admin;
 use App\Models\Transaction;
 use App\Models\WareHouseStaff;
@@ -407,7 +408,7 @@ class WebController extends Controller{
                               'type' => 'transaction',
                               'quantity' => $transaction->quantity,
                               'value' => $transaction->value,
-                              'date' => $transaction->transaction_date   //date("Y-m-d", strtotime($transaction->transaction_date))->timestamp  // Standardized date field
+                              'date' => $transaction->created_at   //date("Y-m-d", strtotime($transaction->transaction_date))->timestamp  // Standardized date field
                            ];
                      });
 
@@ -429,9 +430,9 @@ class WebController extends Controller{
                         ->map(function ($stock_change) {
                            return [
                               'user'=> $stock_change->admin,
-                              'type' => 'stock_change',
-                              'quantity' => $stock_change->quantity,
-                              'value' => $stock_change->products->price * $stock_change->quantity  , //$received->value,
+                              'type' => 'stock_adjustment',
+                              'quantity' => $stock_change->new_quantity,
+                              'value' => $stock_change->products->price * $stock_change->new_quantity  , //$received->value,
                               'date' => $stock_change->created_at // Standardized date field
                            ];
                      });
@@ -442,41 +443,360 @@ class WebController extends Controller{
       })->get()->map(function ($stock_data) {
                            return [
                               'user'=> "Accounts",
-                              'type' => 'stock_data',
+                              'type' => 'opening_balance',
                               'quantity' => $stock_data->new_quantity,
                               'value' => $stock_data->new_value,
                               'date' => $stock_data->created_at // Standardized date field
                            ];
                      });
 
-     
-     
-      $mergedResults = $transactions->merge($received_goods)->merge($stock_change)->merge($stock_data);
+      
+      if($request->has('transaction_only')){
+         $mergedResults = $transactions;
+      }
+      else if($request->has('received_only')){
+         $mergedResults = $received_goods;
+      }
+      else{
+         $mergedResults = $transactions -> concat($received_goods)->concat ($stock_change)->concat($stock_data); 
+      }               
+      
+    
 
       // Sort by date in descending order (latest first)
-      $sortedResults = $mergedResults->map(function ($item) {
+      $results = $mergedResults->map(function ($item) {
          $item['date'] = Carbon::parse($item['date']); // Convert to Carbon
          return $item;
      })->sortByDesc('date')->values();
       //$mergedResults->sortBy('date')->values();
+
+      $sortedResults = collect($results);
       
       $page = request()->get('page', 1);
       $perPage = 15; // Number of items per page
 
       // Manually paginate the collection
       $paginator = new LengthAwarePaginator(
-         $sortedResults->forPage($page, $perPage), // Slice collection for current page
+         $sortedResults->forPage($page, $perPage)->values(), // Slice collection for current page
          $sortedResults->count(), // Total items
          $perPage, // Items per page
          $page, // Current page
          ['path' => request()->url(), 'query' => request()->query()] // Preserve query params
       );
       // Output the sorted collection
-      return $paginator;
+      return response()->json($paginator);  
 
      
 
    }
+
+   public function getStockTakings(Request $request){
+     if($request->has('ware_house_id')){
+       $ware_house_id = $request->query('ware_house_id');
+       return $this->paginate(Stocks::where('ware_house_id',$ware_house_id)->with(['admin','warehouse'])->latest()->get());
+     } 
+     return  $this->paginate(Stocks::with(['admin','warehouse'])->latest()->get());
+   }
+
+   public function getProductStockBalance(Request $request){
+     $product_id = $request->query("product_id");
+     $ware_house_id = $request->query('ware_house_id');
+
+     $start_date = $request->query('start_date');
+     $end_date = $request->query('end_date');
+
+     //echo $start_date;
+     
+     $stock_data = StockData::where("product_id",$product_id)->whereHas('stock', function ($query)  use ($ware_house_id, $start_date) {
+                  $query->where('ware_house_id', $ware_house_id)->where('status',"approved")->whereDate('created_at','=', Carbon::parse($start_date));
+               })->get()->map(function ($stock_data) use ($start_date) {
+                        return [
+                           'user'=> "Accounts",
+                           'type' => 'opening_balance',
+                           'quantity' => $stock_data->new_quantity,
+                           'value' => $stock_data->new_value,
+                           'date' => $start_date //$stock_data->created_at // Standardized date field
+                        ];
+                  });
+      
+      $transactions =  Transaction::where("product_id",$product_id)->where("ware_house_id",$ware_house_id)->whereDate('created_at','>=', Carbon::parse($start_date))->whereDate('created_at','<=', Carbon::parse($end_date))->with('admin')->get()
+         ->map(function ($transaction) {
+            return [
+               'user'=> $transaction->admin,
+               'type' => 'transaction',
+               'quantity' => $transaction->quantity,
+               'value' => $transaction->value,
+               'date' => $transaction->created_at  
+            ];
+      }); 
+
+      $received_goods = ReceivedGoods::where("product_id",$product_id)->where("ware_house_id",$ware_house_id)->whereDate('created_at','>=', Carbon::parse($start_date))->whereDate('created_at','<=', Carbon::parse($end_date))->with('admin')->get()
+         ->map(function ($received) {
+            return [
+               'user'=> $received->admin,
+               'type' => 'received',
+               'quantity' => $received->quantity,
+               'value' => $received->value,
+               'date' => $received->created_at // Standardized date field
+            ];
+      });
+      
+      $mergedResults = $stock_data -> concat($transactions)->concat($received_goods); 
+
+      $results = $mergedResults->map(function ($item) {
+         $item['date'] = Carbon::parse($item['date']); // Convert to Carbon
+         return $item;
+      })->sortBy('date')->values();
+
+      $sortedResults = collect($results);
+      
+      $page = request()->get('page', 1);
+      $perPage = 15; // Number of items per page
+
+      // Manually paginate the collection
+      $paginator = new LengthAwarePaginator(
+         $sortedResults->forPage($page, $perPage)->values(), // Slice collection for current page
+         $sortedResults->count(), // Total items
+         $perPage, // Items per page
+         $page, // Current page
+         ['path' => request()->url(), 'query' => request()->query()] // Preserve query params
+      );
+      // Output the sorted collection
+      return response()->json($paginator);  ;
+
+     // return $results;
+   }
+
+
+   public function addProductCategories(Request $request){
+      $request ->validate([
+          'name' => 'required|string|unique:product_categories,name',
+      ]);
+
+      $product_categories = new ProductCategories;
+      $product_categories->name = $request->name;
+      $product_category_save = $product_categories->save();
+
+      if($product_category_save){
+         $resArr['message'] = "Successfully added product category";              
+         return response()->json($resArr,200);
+      }
+      else{
+         $resArr['message'] = "An error has occurred";              
+         return response()->json($resArr,202);
+         
+      }
+
+     
+   }
+
+   public function getWarehouseInventory(Request $request,String $id){
+     $ware_house_id = $id;
+    
+
+     if($request->has('keyword')){
+         $keyword = $request->query('keyword');
+         $res = Product::where('name', 'like', "%$keyword%")
+                     ->orWhere('origin', 'like', "%$keyword%")
+                     ->orWhereHas('category', function ($query) use ($keyword) {
+                     $query->where('name', 'like', "%$keyword%");
+                  })->with(['warehouses'=> function ($query) use($ware_house_id) {
+                     $query->where('ware_house_id', $ware_house_id);
+                    }, "category"])->get();
+         return $this->paginate($res);           
+                   
+     }else{
+      $res = Product::with(['warehouses'=> function ($query) use($ware_house_id) {
+         $query->where('ware_house_id', $ware_house_id);
+        }, "category"])->get();
+        return $this->paginate($res);
+     }
+
+     
+
+   }
+
+   public function getAllProducts(String $id){
+      $ware_house_id = $id;
+      $res = Product::with(['warehouses'=> function ($query) use($ware_house_id) {
+        $query->where('ware_house_id', $ware_house_id);
+      }, "category"])->get();
+      return response()->json($res);
+   }
+
+   public function sendRequisition(Request $request){
+      $data = $request->data;
+      $reason = $request->reason;
+      $warehouse = $request->warehouse;
+      $user_id = $request->user_id;
+      
+      $resArr = [];
+      $requisition = new Requisition;
+      $requisition->warehouse_id = $warehouse;
+      $requisition->reason = $reason;
+      $requisition->status = "pending";
+      $result = $requisition->save();
+
+      $insertId = $requisition->id;
+      if($result){
+         foreach($data as $item){
+           $product_id = $item['product_id'];
+           $quantity = $item['quantity'];
+           $value = $item['value'];
+
+           ReceivedGoods::insert([
+            'product_id' => $product_id,
+            'user_id' => $user_id,
+            'ware_house_id' => $warehouse,
+            'requisition_id' => $insertId,
+            'quantity' => $quantity,
+            'value' => $value, 
+            'created_at' => now(),
+            'updated_at' => now(),
+           ]);
+         }
+         $resArr['message'] = 'Successfully sent requisition, please contact Director for acceptance';
+         return response()->json($resArr,200);
+      }else{
+         $resArr['message'] = 'Requisition not sent, please check network';
+         return response()->json($resArr,202);
+        
+      }
+   }
+
+   public function getRequisition(String $id){
+      return $this->paginate(Requisition::where('warehouse_id',$id)->with('approver')->latest()->get());
+   }
+
+   public function getRequisitionProducts(String $id){
+     return  ReceivedGoods::where('requisition_id',$id)->with(['products','admin'])->get();
+   }
+
+   public function rejectRequisition(String $id){
+     Requisition::where("id",$id)->delete();
+     ReceivedGoods::where("requisition_id",$id)->delete();
+     $resArr = [];
+     $resArr['message'] = 'Requisition deleted';
+     return response()->json($resArr,200);
+   }
+
+   public function acceptRequisition(Request $request){
+      $request ->validate([
+         'requisition_id' => 'required|string',
+         'approver_id' => 'required'
+      ]); 
+      $id = $request->requisition_id;
+      $approver_id = $request->approver_id;
+
+      Requisition::where("id",$id)->update([
+         "status" => "complete",
+         "approver_id" => $approver_id
+      ]);
+      
+      $goods = ReceivedGoods::where("requisition_id",$id)->with('products')->get();
+      foreach($goods as $item){
+        $price = $item->products->price;
+        $quantity = $item->quantity;
+        $value = $price * $quantity;
+        $warehouse_id = $item->ware_house_id;
+        $product_id = $item->product_id;
+
+        $inventory = DB::table('products_warehouses')
+        ->where('product_id', '=', $product_id )
+        ->where('ware_house_id', '=', $warehouse_id ) ->first();
+
+        $previous_quantity = $inventory->quantity;
+        $new_quantity = $previous_quantity + $quantity;
+
+        $new_value = $new_quantity * $price;
+
+        DB::table('products_warehouses')
+        ->where('product_id', '=', $product_id )
+        ->where('ware_house_id', '=', $warehouse_id )->update([
+         "quantity" =>  $new_quantity,
+         "value" => $new_value
+        ]);
+        
+
+      }
+
+      $resArr['message'] = 'Requisition accepted';
+      return response()->json($resArr,200);
+   }
+
+   public function getTransactions(Request $request){
+      if($request->has('type')){
+         $type = $request->input('type');
+         $date = $request->input('date');
+         if($type == "Transaction Date"){
+            $transaction = Transaction::where('transaction_date',$date)->select(
+               'invoice_no',
+               'transaction_type',
+               'customer_name',
+               'transaction_date',
+               'status',
+               DB::raw('SUM(value) as total_value'),
+               DB::raw('SUM(quantity) as total_quantity'),
+               DB::raw('MAX(created_at) as latest_created_at')
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         }
+         else if($type == "Creation Date"){
+              $transaction = Transaction::whereDate('created_at',$date)->select(
+               'invoice_no',
+               'transaction_type',
+               'customer_name',
+               'transaction_date',
+               'status',
+               DB::raw('SUM(value) as total_value'),
+               DB::raw('SUM(quantity) as total_quantity'),
+               DB::raw('MAX(created_at) as latest_created_at')
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         }
+      }
+      else{
+         if($request->has('keyword')){
+            $keyword = $request->input('keyword');
+            $transaction = Transaction::select(
+               'invoice_no',
+               'transaction_type',
+               'customer_name',
+               'transaction_date',
+               'status',
+               DB::raw('SUM(value) as total_value'),
+               DB::raw('SUM(quantity) as total_quantity'),
+               DB::raw('MAX(created_at) as latest_created_at')
+            )->when($keyword, function ($query) use ($keyword) {
+               $query->where(function ($q) use ($keyword) {
+                   $q->where('invoice_no', 'like', "%$keyword%")
+                     ->orWhere('transaction_type', 'like', "%$keyword%")
+                     ->orWhere('customer_name', 'like', "%$keyword%");
+               });
+           })->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         }else{
+            $transaction = Transaction::select(
+               'invoice_no',
+               'transaction_type',
+               'customer_name',
+               'status',
+               'transaction_date',
+               DB::raw('SUM(value) as total_value'),
+               DB::raw('SUM(quantity) as total_quantity'),
+               DB::raw('MAX(created_at) as latest_created_at')
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      
+         }
+      }
+      
+     
+      return $this->paginate($transaction);
+
+   }
+
+   
+
+  
+
+  
 
 
    
