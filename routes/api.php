@@ -77,4 +77,8 @@ Route::middleware('auth:sanctum')->get('web/getRequisitionProducts/{id}',[WebCon
 Route::middleware('auth:sanctum')->get('web/rejectRequisition/{id}',[WebController::class,'rejectRequisition']);
 Route::middleware('auth:sanctum')->post('web/acceptRequisition',[WebController::class,'acceptRequisition']);
 Route::middleware('auth:sanctum')->get('web/getTransactions',[WebController::class,'getTransactions']);
+Route::middleware('auth:sanctum')->get('web/getCustomers',[WebController::class,'getCustomers']);
+Route::middleware('auth:sanctum')->post('web/addCustomer',[WebController::class,'addCustomer']);
+Route::middleware('auth:sanctum')->get('web/getAllCustomers',[WebController::class,'getAllCustomers']);
+Route::middleware('auth:sanctum')->post('web/makeTransaction',[WebController::class,'makeTransaction']);
 

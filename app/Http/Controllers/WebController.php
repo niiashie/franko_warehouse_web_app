@@ -15,6 +15,7 @@ use App\Models\Admin;
 use App\Models\Transaction;
 use App\Models\WareHouseStaff;
 use App\Models\WareHouse;
+use App\Models\Customer;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
@@ -790,6 +791,175 @@ class WebController extends Controller{
      
       return $this->paginate($transaction);
 
+   }
+
+   public function getCustomers(Request $request){
+      if($request->has('keyword')){
+         $keyword = $request->query('keyword');
+         $result = Customer::where('name', 'like', "%$keyword%")
+                      ->orWhere('location', 'like', "%$keyword%")
+                      ->orWhere('phone','like',"%$keyword%")
+                     ->get();
+         return $this->paginate($result);          
+      }else{
+         return $this->paginate(Customer::all());
+      }
+     
+   }
+
+   public function addCustomer(Request $request){
+      $request ->validate([
+         'name' => 'required|string|unique:customers,name',
+         'phone' => 'required|unique:customers,phone',
+         'location' => 'required'
+      ]); 
+      
+      Customer::insert([
+         'name' => $request->name,
+         'location' => $request->location,
+         'phone' => $request->phone,
+         'balance' => 0,
+         'created_at' => now(),
+         'updated_at' => now(),
+        ]);
+
+      $resArr['message'] = 'Successfully created customer';
+      return response()->json($resArr,200);   
+
+   }
+
+   public function getAllCustomers(){
+      return Customer::all();
+   }
+
+   public function makeTransaction(Request $request){
+
+      $request ->validate([
+         'data' => 'required',
+         'type' => 'required',
+         'warehouse_id' => 'required',
+         'user_id' => 'required',
+         'transaction_date' => 'required',
+         'transaction_type' => 'required'
+      ]); 
+      $data = $request->data;
+      $type = $request->type;
+      $warehouse = $request->warehouse_id;
+      $user_id = $request->user_id;
+      $customer_id = $request->customer_id;
+      $customer_name = $request->customer_name;
+      $transaction_date = $request->transaction_date;
+      $transaction_type = $request->transaction_type;
+      $warehouse_location = $request->warehouse_location;
+
+      if($transaction_type == "Credit Sale"){
+         $status = "unpaid";
+      }
+      else{
+         $status = "paid";
+      }
+
+      $error_message = "";
+
+       //Get last known transaction
+      $last_transaction = Transaction::latest()->first();
+      $id = (int)$last_transaction->invoice_no;
+      $invoice_number = "000".($id + 1);
+      
+      foreach($data as $item){
+         //DB::table('products_warehouses')
+         $res = DB::table('products_warehouses')->where([
+             ['ware_house_id',$warehouse],
+             ['product_id',$item['product_id']]
+         ])->get();
+         
+         $previous_value = $res[0]->value;
+         $previous_quantity = $res[0]->quantity;
+
+         $new_quantity = $previous_quantity - $item['quantity'];
+         $new_value = $previous_value - $item['value'];
+         if($new_quantity >= 0){
+            
+
+             $exists =  DB::table('transactions')
+                 ->where('product_id', $product->product_id)
+                 ->where('user_id', $user_id)
+                 ->where('ware_house_id', $warehouse)
+                 ->where('quantity', $product->product_quantity)
+                 ->where('value', $product->product_value)
+                 ->where('transaction_type', $transactionType)
+                 ->where('transaction_date', $transactionDate)
+                 ->where('customer_name', $customerName)
+                 ->where('created_at', '>=', now()->subSeconds(10)) // Check last 30 seconds
+                 ->exists();
+
+             if ($exists) {
+                 break;
+                 $error_message = "Duplicate Detected";
+                 $error_counter = $error_counter + 1; 
+                 //return response()->json(['message' => 'Duplicate transaction detected!'], 409);
+             }
+             else{
+                 $update = DB::table('products_warehouses')->where([
+                 ['ware_house_id',$warehouse],
+                 ['product_id',$item['product_id']]
+                 ])->update([
+                     'quantity'=>  $new_quantity,
+                     'value' => $new_value
+                 ]);
+                 
+                 $goods = new Transaction;
+                 $goods->product_id = $item['product_id'];
+                 $goods->ware_house_id = $warehouse;
+                 $goods->quantity = $item['quantity'];
+                 $goods->value = $item['value'];
+                 $goods->invoice_no = $invoice_number;
+                 $goods->transaction_date = $transaction_date;
+                 $goods->transaction_type = $transaction_type;
+                 $goods->ware_house_name = $warehouse_location;
+                 $goods->customer_name = $customer_name;
+                 $goods->customer_id = $customer_id;
+                 $goods->user_id = $user_id;
+                 $goods->status = $status;
+                 $goods->save();     
+             }
+
+
+             
+         }
+         else{
+            $error_counter = $error_counter + 1; 
+         }
+
+       
+         
+     }
+
+      if($error_counter > 0){
+       $resArr['message'] = $error_message;
+       return response()->json($resArr,401); 
+      }
+      else{
+         $resArr['message'] = 'Successfully created transaction';
+         $resArr['transaction'] = Transaction::where('invoice_no',$invoice_number)->get();
+        return response()->json($resArr,200);
+      }
+      // foreach($data as $item){
+      //    $product_id = $item['product_id'];
+      //    $quantity = $item['quantity'];
+      //    $value = $item['value'];
+
+      //    ReceivedGoods::insert([
+      //     'product_id' => $product_id,
+      //     'user_id' => $user_id,
+      //     'ware_house_id' => $warehouse,
+      //     'requisition_id' => $insertId,
+      //     'quantity' => $quantity,
+      //     'value' => $value, 
+      //     'created_at' => now(),
+      //     'updated_at' => now(),
+      //    ]);
+      // }
    }
 
    
