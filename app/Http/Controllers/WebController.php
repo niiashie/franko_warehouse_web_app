@@ -520,7 +520,7 @@ class WebController extends Controller{
                         ];
                   });
       
-      $transactions =  Transaction::where("product_id",$product_id)->where("ware_house_id",$ware_house_id)->whereDate('created_at','>=', Carbon::parse($start_date))->whereDate('created_at','<=', Carbon::parse($end_date))->with('admin')->get()
+      $transactions =  Transaction::where("product_id",$product_id)->where('status','!=','reversed')->where("ware_house_id",$ware_house_id)->whereDate('created_at','>=', Carbon::parse($start_date))->whereDate('created_at','<=', Carbon::parse($end_date))->with('admin')->get()
          ->map(function ($transaction) {
             return [
                'user'=> $transaction->admin,
@@ -530,6 +530,17 @@ class WebController extends Controller{
                'date' => $transaction->created_at  
             ];
       }); 
+
+      $reversed_transactions =  Transaction::where("product_id",$product_id)->where('status','reversed')->where("ware_house_id",$ware_house_id)->whereDate('created_at','>=', Carbon::parse($start_date))->whereDate('created_at','<=', Carbon::parse($end_date))->with('admin')->get()
+         ->map(function ($transaction) {
+            return [
+               'user'=> $transaction->admin,
+               'type' => 'reversed',
+               'quantity' => $transaction->quantity,
+               'value' => $transaction->value,
+               'date' => $transaction->created_at  
+            ];
+      });
 
       $received_goods = ReceivedGoods::where("product_id",$product_id)->where("ware_house_id",$ware_house_id)->whereDate('created_at','>=', Carbon::parse($start_date))->whereDate('created_at','<=', Carbon::parse($end_date))->with('admin')->get()
          ->map(function ($received) {
@@ -542,7 +553,7 @@ class WebController extends Controller{
             ];
       });
       
-      $mergedResults = $stock_data -> concat($transactions)->concat($received_goods); 
+      $mergedResults = $stock_data -> concat($transactions)->concat($reversed_transactions)->concat($received_goods); 
 
       $results = $mergedResults->map(function ($item) {
          $item['date'] = Carbon::parse($item['date']); // Convert to Carbon
@@ -734,33 +745,37 @@ class WebController extends Controller{
                'invoice_no',
                'transaction_type',
                'customer_name',
+               'customer_id',
                'transaction_date',
                'status',
                DB::raw('SUM(value) as total_value'),
                DB::raw('SUM(quantity) as total_quantity'),
                DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
          }
          else if($type == "Creation Date"){
               $transaction = Transaction::whereDate('created_at',$date)->select(
                'invoice_no',
                'transaction_type',
                'customer_name',
+               'customer_id',
                'transaction_date',
                'status',
                DB::raw('SUM(value) as total_value'),
                DB::raw('SUM(quantity) as total_quantity'),
                DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
          }
       }
-      else{
+      else if($request->has('status')){
          if($request->has('keyword')){
             $keyword = $request->input('keyword');
-            $transaction = Transaction::select(
+            $status = $request->input('status');
+            $transaction = Transaction::where('status',$status)->select(
                'invoice_no',
                'transaction_type',
                'customer_name',
+               'customer_id',
                'transaction_date',
                'status',
                DB::raw('SUM(value) as total_value'),
@@ -772,18 +787,54 @@ class WebController extends Controller{
                      ->orWhere('transaction_type', 'like', "%$keyword%")
                      ->orWhere('customer_name', 'like', "%$keyword%");
                });
-           })->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-         }else{
-            $transaction = Transaction::select(
+           })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         }
+         else{
+            $transaction = Transaction::where('status',$status)->select(
                'invoice_no',
                'transaction_type',
                'customer_name',
+               'customer_id',
                'status',
                'transaction_date',
                DB::raw('SUM(value) as total_value'),
                DB::raw('SUM(quantity) as total_quantity'),
                DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         }
+      }
+      else{
+         if($request->has('keyword')){
+            $keyword = $request->input('keyword');
+            $transaction = Transaction::select(
+               'invoice_no',
+               'transaction_type',
+               'customer_name',
+               'customer_id',
+               'transaction_date',
+               'status',
+               DB::raw('SUM(value) as total_value'),
+               DB::raw('SUM(quantity) as total_quantity'),
+               DB::raw('MAX(created_at) as latest_created_at')
+            )->when($keyword, function ($query) use ($keyword) {
+               $query->where(function ($q) use ($keyword) {
+                   $q->where('invoice_no', 'like', "%$keyword%")
+                     ->orWhere('transaction_type', 'like', "%$keyword%")
+                     ->orWhere('customer_name', 'like', "%$keyword%");
+               });
+           })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         }else{
+            $transaction = Transaction::select(
+               'invoice_no',
+               'transaction_type',
+               'customer_name',
+               'customer_id',
+               'status',
+               'transaction_date',
+               DB::raw('SUM(value) as total_value'),
+               DB::raw('SUM(quantity) as total_quantity'),
+               DB::raw('MAX(created_at) as latest_created_at')
+            )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
       
          }
       }
@@ -836,17 +887,16 @@ class WebController extends Controller{
 
       $request ->validate([
          'data' => 'required',
-         'type' => 'required',
          'warehouse_id' => 'required',
          'user_id' => 'required',
          'transaction_date' => 'required',
          'transaction_type' => 'required'
       ]); 
       $data = $request->data;
-      $type = $request->type;
       $warehouse = $request->warehouse_id;
       $user_id = $request->user_id;
       $customer_id = $request->customer_id;
+      $discount = $request->discount;
       $customer_name = $request->customer_name;
       $transaction_date = $request->transaction_date;
       $transaction_type = $request->transaction_type;
@@ -860,11 +910,15 @@ class WebController extends Controller{
       }
 
       $error_message = "";
+      $error_counter = 0;
+      $total = 0;
 
        //Get last known transaction
       $last_transaction = Transaction::latest()->first();
       $id = (int)$last_transaction->invoice_no;
       $invoice_number = "000".($id + 1);
+
+      
       
       foreach($data as $item){
          //DB::table('products_warehouses')
@@ -882,14 +936,14 @@ class WebController extends Controller{
             
 
              $exists =  DB::table('transactions')
-                 ->where('product_id', $product->product_id)
+                 ->where('product_id', $item['product_id'])
                  ->where('user_id', $user_id)
                  ->where('ware_house_id', $warehouse)
-                 ->where('quantity', $product->product_quantity)
-                 ->where('value', $product->product_value)
-                 ->where('transaction_type', $transactionType)
-                 ->where('transaction_date', $transactionDate)
-                 ->where('customer_name', $customerName)
+                 ->where('quantity',$item['quantity'])
+                 ->where('value', $item['value'])
+                 ->where('transaction_type', $transaction_type)
+                 ->where('transaction_date', $transaction_date)
+                 ->where('customer_name', $customer_name)
                  ->where('created_at', '>=', now()->subSeconds(10)) // Check last 30 seconds
                  ->exists();
 
@@ -907,6 +961,7 @@ class WebController extends Controller{
                      'quantity'=>  $new_quantity,
                      'value' => $new_value
                  ]);
+                 $total = $total + $item['value'];
                  
                  $goods = new Transaction;
                  $goods->product_id = $item['product_id'];
@@ -921,6 +976,7 @@ class WebController extends Controller{
                  $goods->customer_id = $customer_id;
                  $goods->user_id = $user_id;
                  $goods->status = $status;
+                 $goods->discount = $discount;
                  $goods->save();     
              }
 
@@ -940,27 +996,113 @@ class WebController extends Controller{
        return response()->json($resArr,401); 
       }
       else{
+         
+         if($customer_id != null){
+            $customer = Customer::where("id",$customer_id)->first();
+            $previous_balance = $customer->balance;
+            $new_balance = $previous_balance + $total;
+
+            //Update customer balance
+             Customer::where('id',$customer_id)->update([
+                   'balance'=>  $new_balance,
+                  
+               ]);
+         }
+
          $resArr['message'] = 'Successfully created transaction';
-         $resArr['transaction'] = Transaction::where('invoice_no',$invoice_number)->get();
+         $resArr['transaction'] = Transaction::where('invoice_no',$invoice_number)->with(['products','warehouse','admin','customer'])->get();
         return response()->json($resArr,200);
       }
-      // foreach($data as $item){
-      //    $product_id = $item['product_id'];
-      //    $quantity = $item['quantity'];
-      //    $value = $item['value'];
-
-      //    ReceivedGoods::insert([
-      //     'product_id' => $product_id,
-      //     'user_id' => $user_id,
-      //     'ware_house_id' => $warehouse,
-      //     'requisition_id' => $insertId,
-      //     'quantity' => $quantity,
-      //     'value' => $value, 
-      //     'created_at' => now(),
-      //     'updated_at' => now(),
-      //    ]);
-      // }
+    
    }
+
+   public function getTransactionDetails(String $invoice_number){
+     return Transaction::where('invoice_no',$invoice_number)->with(['products','warehouse','admin','customer'])->get();
+   }
+
+   public function assignInvoiceToCustomer(Request $request){
+      $request ->validate([
+         'invoice_number' => 'required',
+         'customer_id' => 'required',
+      ]); 
+      $invoice_number = $request->invoice_number;
+      $customer_id = $request->customer_id;
+      
+      $customer = Customer::where("id",$customer_id)->first();
+      $transactions = Transaction::where('invoice_no',$invoice_number)->get();
+      
+      $total = 0;
+      foreach($transactions as $obj){
+       $total = $total + $obj->value;  
+       Transaction::where('id', $obj->id)
+        ->update([
+          'customer_id'=>$customer_id,
+          'customer_name' => $customer->name
+          ]);
+      }
+
+      $customer_new_balance = $customer->balance + $total;
+      Customer::where('id',$customer_id)->update([
+         "balance" => $customer_new_balance
+      ]);
+
+      $resArr['message'] = 'Successfully assigned customer to invoice';
+      return response()->json($resArr,200);   
+
+   }
+
+   public function reverseTransaction(Request $request){
+      $request ->validate([
+          'invoiceNumber' => 'required',
+      ]);
+
+      $invoice_number = $request->invoiceNumber;
+
+      $transaction = Transaction::where('invoice_no',$invoice_number)->with('products')->get();
+      $customer_id = $transaction[0]->customer_id;
+      $total = 0;
+      foreach($transaction as $res){
+         $product_unit_price = $res->products->price;
+         $total = $total + $res->value;
+         //$quantity = $res->quantity;
+
+         //Get stock count
+         $stock =  DB::table('products_warehouses')->where([
+                      ['ware_house_id',$res->ware_house_id],
+                      ['product_id',$res->product_id]
+         ])->first();
+
+         $previous_quantity = $stock->quantity;
+         $new_quantity = $previous_quantity + $res->quantity;
+         $new_value = $product_unit_price * $new_quantity;
+         
+         DB::table('products_warehouses')->where([
+          ['ware_house_id',$res->ware_house_id],
+                      ['product_id',$res->product_id]
+          ])->update([
+              'quantity'=>  $new_quantity,
+              'value' => $new_value
+          ]);
+
+
+         
+      }
+      if($customer_id != null){
+         $customer = Customer::where('id',$customer_id)->first();
+         $previous_balance = $customer->balance;
+         $new_balance = $previous_balance - $total;
+
+         Customer::where('id',$customer_id)->update([
+            "balance" => $new_balance
+         ]
+         );
+      }
+      Transaction::where('invoice_no', $invoice_number)->update([
+         "status" => "reversed"
+      ]);
+      $resArr['message'] = 'Successfully reversed transaction';
+      return response()->json($resArr,200);
+  }
 
    
 

@@ -20,4 +20,8 @@ class Transaction extends Model
     public function admin(){
         return $this->belongsTo(Admin::class, "user_id");
     }
+
+    public function customer(){
+        return $this->belongsTo(Customer::class,"customer_id");
+    }
 }

@@ -81,4 +81,7 @@ Route::middleware('auth:sanctum')->get('web/getCustomers',[WebController::class,
 Route::middleware('auth:sanctum')->post('web/addCustomer',[WebController::class,'addCustomer']);
 Route::middleware('auth:sanctum')->get('web/getAllCustomers',[WebController::class,'getAllCustomers']);
 Route::middleware('auth:sanctum')->post('web/makeTransaction',[WebController::class,'makeTransaction']);
+Route::middleware('auth:sanctum')->get('web/getTransactionDetails/{invoice_number}',[WebController::class,'getTransactionDetails']);
+Route::middleware('auth:sanctum')->post('web/assignInvoiceToCustomer',[WebController::class,'assignInvoiceToCustomer']);
+Route::middleware('auth:sanctum')->post('web/reverseTransaction',[WebController::class,'reverseTransaction']);
 
