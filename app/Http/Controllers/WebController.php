@@ -737,107 +737,156 @@ class WebController extends Controller{
    }
 
    public function getTransactions(Request $request){
-      if($request->has('type')){
-         $type = $request->input('type');
-         $date = $request->input('date');
-         if($type == "Transaction Date"){
-            $transaction = Transaction::where('transaction_date',$date)->select(
-               'invoice_no',
-               'transaction_type',
-               'customer_name',
-               'customer_id',
-               'transaction_date',
-               'status',
-               DB::raw('SUM(value) as total_value'),
-               DB::raw('SUM(quantity) as total_quantity'),
-               DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-         }
-         else if($type == "Creation Date"){
-              $transaction = Transaction::whereDate('created_at',$date)->select(
-               'invoice_no',
-               'transaction_type',
-               'customer_name',
-               'customer_id',
-               'transaction_date',
-               'status',
-               DB::raw('SUM(value) as total_value'),
-               DB::raw('SUM(quantity) as total_quantity'),
-               DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-         }
-      }
-      else if($request->has('status')){
-         if($request->has('keyword')){
-            $keyword = $request->input('keyword');
-            $status = $request->input('status');
-            $transaction = Transaction::where('status',$status)->select(
-               'invoice_no',
-               'transaction_type',
-               'customer_name',
-               'customer_id',
-               'transaction_date',
-               'status',
-               DB::raw('SUM(value) as total_value'),
-               DB::raw('SUM(quantity) as total_quantity'),
-               DB::raw('MAX(created_at) as latest_created_at')
-            )->when($keyword, function ($query) use ($keyword) {
-               $query->where(function ($q) use ($keyword) {
-                   $q->where('invoice_no', 'like', "%$keyword%")
-                     ->orWhere('transaction_type', 'like', "%$keyword%")
-                     ->orWhere('customer_name', 'like', "%$keyword%");
-               });
-           })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-         }
-         else{
-            $transaction = Transaction::where('status',$status)->select(
-               'invoice_no',
-               'transaction_type',
-               'customer_name',
-               'customer_id',
-               'status',
-               'transaction_date',
-               DB::raw('SUM(value) as total_value'),
-               DB::raw('SUM(quantity) as total_quantity'),
-               DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-         }
+      $query = Transaction::query();
+      if($request->has('keyword')){
+         $keyword = $request->input('keyword');
+
       }
       else{
-         if($request->has('keyword')){
-            $keyword = $request->input('keyword');
-            $transaction = Transaction::select(
-               'invoice_no',
-               'transaction_type',
-               'customer_name',
-               'customer_id',
-               'transaction_date',
-               'status',
-               DB::raw('SUM(value) as total_value'),
-               DB::raw('SUM(quantity) as total_quantity'),
-               DB::raw('MAX(created_at) as latest_created_at')
-            )->when($keyword, function ($query) use ($keyword) {
-               $query->where(function ($q) use ($keyword) {
-                   $q->where('invoice_no', 'like', "%$keyword%")
-                     ->orWhere('transaction_type', 'like', "%$keyword%")
-                     ->orWhere('customer_name', 'like', "%$keyword%");
-               });
-           })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-         }else{
-            $transaction = Transaction::select(
-               'invoice_no',
-               'transaction_type',
-               'customer_name',
-               'customer_id',
-               'status',
-               'transaction_date',
-               DB::raw('SUM(value) as total_value'),
-               DB::raw('SUM(quantity) as total_quantity'),
-               DB::raw('MAX(created_at) as latest_created_at')
-            )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+         $keyword = "";
+      }
       
+      if($request->has('customer_id')){
+         $query->where('customer_id',$request->input('customer_id'));
+      }
+
+      if($request->has('type')){
+         $date = $request->input('date');
+         $type = $request->input('type');
+
+         if($type == "Transaction Date"){
+            $query->where('transaction_date',$date);
+         }
+         else{
+            $query->whereDate('created_at',$date);
          }
       }
+      //Check for status params
+      if($request->has('status')){
+         $status = $request->input('status');
+         $query->where('status',$status);
+      }
+
+      $transaction = $query->select(
+         'invoice_no',
+         'transaction_type',
+         'customer_name',
+         'customer_id',
+         'transaction_date',
+         'status',
+         DB::raw('SUM(value) as total_value'),
+         DB::raw('SUM(quantity) as total_quantity'),
+         DB::raw('MAX(created_at) as latest_created_at')
+      )->when($keyword, function ($query) use ($keyword) {
+         $query->where(function ($q) use ($keyword) {
+             $q->where('invoice_no', 'like', "%$keyword%")
+               ->orWhere('transaction_type', 'like', "%$keyword%")
+               ->orWhere('customer_name', 'like', "%$keyword%");
+         });
+     })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+
+
+      // if($request->has('type')){
+      //    $type = $request->input('type');
+      //    $date = $request->input('date');
+      //    if($type == "Transaction Date"){
+      //       $transaction = Transaction::where('transaction_date',$date)->select(
+      //          'invoice_no',
+      //          'transaction_type',
+      //          'customer_name',
+      //          'customer_id',
+      //          'transaction_date',
+      //          'status',
+      //          DB::raw('SUM(value) as total_value'),
+      //          DB::raw('SUM(quantity) as total_quantity'),
+      //          DB::raw('MAX(created_at) as latest_created_at')
+      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      //    }
+      //    else if($type == "Creation Date"){
+      //         $transaction = Transaction::whereDate('created_at',$date)->select(
+      //          'invoice_no',
+      //          'transaction_type',
+      //          'customer_name',
+      //          'customer_id',
+      //          'transaction_date',
+      //          'status',
+      //          DB::raw('SUM(value) as total_value'),
+      //          DB::raw('SUM(quantity) as total_quantity'),
+      //          DB::raw('MAX(created_at) as latest_created_at')
+      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      //    }
+      // }
+      // else if($request->has('status')){
+      //    if($request->has('keyword')){
+      //       $keyword = $request->input('keyword');
+      //       $status = $request->input('status');
+      //       $transaction = Transaction::where('status',$status)->select(
+      //          'invoice_no',
+      //          'transaction_type',
+      //          'customer_name',
+      //          'customer_id',
+      //          'transaction_date',
+      //          'status',
+      //          DB::raw('SUM(value) as total_value'),
+      //          DB::raw('SUM(quantity) as total_quantity'),
+      //          DB::raw('MAX(created_at) as latest_created_at')
+      //       )->when($keyword, function ($query) use ($keyword) {
+      //          $query->where(function ($q) use ($keyword) {
+      //              $q->where('invoice_no', 'like', "%$keyword%")
+      //                ->orWhere('transaction_type', 'like', "%$keyword%")
+      //                ->orWhere('customer_name', 'like', "%$keyword%");
+      //          });
+      //      })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      //    }
+      //    else{
+      //       $transaction = Transaction::where('status',$status)->select(
+      //          'invoice_no',
+      //          'transaction_type',
+      //          'customer_name',
+      //          'customer_id',
+      //          'status',
+      //          'transaction_date',
+      //          DB::raw('SUM(value) as total_value'),
+      //          DB::raw('SUM(quantity) as total_quantity'),
+      //          DB::raw('MAX(created_at) as latest_created_at')
+      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      //    }
+      // }
+      // else{
+      //    if($request->has('keyword')){
+      //       $keyword = $request->input('keyword');
+      //       $transaction = Transaction::select(
+      //          'invoice_no',
+      //          'transaction_type',
+      //          'customer_name',
+      //          'customer_id',
+      //          'transaction_date',
+      //          'status',
+      //          DB::raw('SUM(value) as total_value'),
+      //          DB::raw('SUM(quantity) as total_quantity'),
+      //          DB::raw('MAX(created_at) as latest_created_at')
+      //       )->when($keyword, function ($query) use ($keyword) {
+      //          $query->where(function ($q) use ($keyword) {
+      //              $q->where('invoice_no', 'like', "%$keyword%")
+      //                ->orWhere('transaction_type', 'like', "%$keyword%")
+      //                ->orWhere('customer_name', 'like', "%$keyword%");
+      //          });
+      //      })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      //    }else{
+      //       $transaction = Transaction::select(
+      //          'invoice_no',
+      //          'transaction_type',
+      //          'customer_name',
+      //          'customer_id',
+      //          'status',
+      //          'transaction_date',
+      //          DB::raw('SUM(value) as total_value'),
+      //          DB::raw('SUM(quantity) as total_quantity'),
+      //          DB::raw('MAX(created_at) as latest_created_at')
+      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
+      
+      //    }
+      // }
       
      
       return $this->paginate($transaction);
