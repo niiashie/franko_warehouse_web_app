@@ -16,6 +16,7 @@ use App\Models\Transaction;
 use App\Models\WareHouseStaff;
 use App\Models\WareHouse;
 use App\Models\Customer;
+use App\Models\Payment;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
@@ -88,6 +89,82 @@ class WebController extends Controller{
             return response()->json($resArr,202);
         }
    }
+
+   public function register(Request $request){
+      $request -> validate([
+        'name' => 'required',
+        'user_id'=>'required|min:4|max:6|string|unique:admins,user_id',
+        'password'=>'required|min:6|max:12',
+        'confirm_password'=>'required|same:password',
+        'adminId' => 'required|min:4|max:6|string'
+     ]);
+     
+     $enteredAdminId = $request->adminId;
+     $hashPassword = Hash::make($request->password);
+
+     $admin = DB::table('admins')
+                  ->join('ware_house_staff','admins.id','=','ware_house_staff.uid')
+                  ->select('admins.user_id','ware_house_staff.role')
+                  ->where('user_id',$enteredAdminId)
+                  ->get();
+     
+     
+     if (!$admin->isEmpty()) { 
+         $obj = json_decode($admin);
+         $role =  $obj[0]->role;
+
+        if($role !='Manager'){
+         $resArr['message'] = 'Invalid Manager ID '.$role;
+         return response()->json($resArr,400);
+          //return back()->withErrors(['Invalid manager ID', '']);
+        }else{
+
+          $insertId = Admin::insertGetId(
+              [
+              'name'=> $request->name,
+              'user_id' => $request->user_id,
+              'password' => $hashPassword
+              ]
+          );
+
+          
+
+          $ware_house_staff = new WareHouseStaff;
+          $ware_house_staff->uid = $insertId;
+          $ware_house_staff->role = 'member';
+          $ware_house_staff->status = 'inactive';
+          $ware_house_staff->ware_house_id = '0';
+          $saveWarehouseStaff = $ware_house_staff->save();
+
+
+
+          if($saveWarehouseStaff){
+            $resArr['message'] = 'Registration successful, contact manager for account activation';
+            return response()->json($resArr,200);
+            
+          }else{
+            $resArr['message'] = 'An error has occured';
+            return response()->json($resArr,400);
+           
+          }
+
+          
+        
+
+
+        }
+       
+
+        
+
+     }
+     else{
+       return back()->withErrors(['Invalid admin ID', '']);
+     }
+
+     
+     
+ }
 
    public function paginate($items, $perPage = 15, $page = null, $options = [])
    {
@@ -255,15 +332,25 @@ class WebController extends Controller{
      $staff_id = $request->staff_id;
      $role = $request->role;
      $ware_house_id = $request->ware_house_id;
-
-     DB::table('ware_house_staff')->insert([
-      'uid' => $staff_id,
-      'ware_house_id' => $ware_house_id,
-      'role' => $role,
-      'status' => "active",
-      'created_at' => now(),
-      'updated_at' => now(),
-     ]);
+     
+     //Check for staff presence
+     $staff = DB::table('ware_house_staff')->where('uid',$staff_id)->where('ware_house_id',0)->get();
+     if (!$staff->isEmpty()){
+      DB::table('ware_house_staff')->where('uid',$staff_id)->where('ware_house_id',0)->update([
+         'ware_house_id' => $ware_house_id,
+         'role' => $role
+      ]);
+     }else{
+      DB::table('ware_house_staff')->insert([
+         'uid' => $staff_id,
+         'ware_house_id' => $ware_house_id,
+         'role' => $role,
+         'status' => "active",
+         'created_at' => now(),
+         'updated_at' => now(),
+        ]);
+     }
+     
      
      $resArr['message'] = "Successfully assigned user to warehouse";              
      return response()->json($resArr,200); 
@@ -383,6 +470,17 @@ class WebController extends Controller{
       ]);
 
       $product->update($validatedData);
+
+      //update product warehouses table
+      $result = DB::table('products_warehouses')->where('product_id', '=', $id )->get();
+      foreach($result as $res){
+         $quantity = $res->quantity;
+         $value = $quantity * $request->price;
+         DB::table('products_warehouses')->where('id',$res->id)->
+         update([
+            "value" => $value,
+         ]);
+      }
 
       return response()->json([
          'message' => 'Product updated successfully!',
@@ -784,109 +882,6 @@ class WebController extends Controller{
                ->orWhere('customer_name', 'like', "%$keyword%");
          });
      })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-
-
-      // if($request->has('type')){
-      //    $type = $request->input('type');
-      //    $date = $request->input('date');
-      //    if($type == "Transaction Date"){
-      //       $transaction = Transaction::where('transaction_date',$date)->select(
-      //          'invoice_no',
-      //          'transaction_type',
-      //          'customer_name',
-      //          'customer_id',
-      //          'transaction_date',
-      //          'status',
-      //          DB::raw('SUM(value) as total_value'),
-      //          DB::raw('SUM(quantity) as total_quantity'),
-      //          DB::raw('MAX(created_at) as latest_created_at')
-      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-      //    }
-      //    else if($type == "Creation Date"){
-      //         $transaction = Transaction::whereDate('created_at',$date)->select(
-      //          'invoice_no',
-      //          'transaction_type',
-      //          'customer_name',
-      //          'customer_id',
-      //          'transaction_date',
-      //          'status',
-      //          DB::raw('SUM(value) as total_value'),
-      //          DB::raw('SUM(quantity) as total_quantity'),
-      //          DB::raw('MAX(created_at) as latest_created_at')
-      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name', 'customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-      //    }
-      // }
-      // else if($request->has('status')){
-      //    if($request->has('keyword')){
-      //       $keyword = $request->input('keyword');
-      //       $status = $request->input('status');
-      //       $transaction = Transaction::where('status',$status)->select(
-      //          'invoice_no',
-      //          'transaction_type',
-      //          'customer_name',
-      //          'customer_id',
-      //          'transaction_date',
-      //          'status',
-      //          DB::raw('SUM(value) as total_value'),
-      //          DB::raw('SUM(quantity) as total_quantity'),
-      //          DB::raw('MAX(created_at) as latest_created_at')
-      //       )->when($keyword, function ($query) use ($keyword) {
-      //          $query->where(function ($q) use ($keyword) {
-      //              $q->where('invoice_no', 'like', "%$keyword%")
-      //                ->orWhere('transaction_type', 'like', "%$keyword%")
-      //                ->orWhere('customer_name', 'like', "%$keyword%");
-      //          });
-      //      })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-      //    }
-      //    else{
-      //       $transaction = Transaction::where('status',$status)->select(
-      //          'invoice_no',
-      //          'transaction_type',
-      //          'customer_name',
-      //          'customer_id',
-      //          'status',
-      //          'transaction_date',
-      //          DB::raw('SUM(value) as total_value'),
-      //          DB::raw('SUM(quantity) as total_quantity'),
-      //          DB::raw('MAX(created_at) as latest_created_at')
-      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-      //    }
-      // }
-      // else{
-      //    if($request->has('keyword')){
-      //       $keyword = $request->input('keyword');
-      //       $transaction = Transaction::select(
-      //          'invoice_no',
-      //          'transaction_type',
-      //          'customer_name',
-      //          'customer_id',
-      //          'transaction_date',
-      //          'status',
-      //          DB::raw('SUM(value) as total_value'),
-      //          DB::raw('SUM(quantity) as total_quantity'),
-      //          DB::raw('MAX(created_at) as latest_created_at')
-      //       )->when($keyword, function ($query) use ($keyword) {
-      //          $query->where(function ($q) use ($keyword) {
-      //              $q->where('invoice_no', 'like', "%$keyword%")
-      //                ->orWhere('transaction_type', 'like', "%$keyword%")
-      //                ->orWhere('customer_name', 'like', "%$keyword%");
-      //          });
-      //      })->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-      //    }else{
-      //       $transaction = Transaction::select(
-      //          'invoice_no',
-      //          'transaction_type',
-      //          'customer_name',
-      //          'customer_id',
-      //          'status',
-      //          'transaction_date',
-      //          DB::raw('SUM(value) as total_value'),
-      //          DB::raw('SUM(quantity) as total_quantity'),
-      //          DB::raw('MAX(created_at) as latest_created_at')
-      //       )->groupBy('invoice_no', 'transaction_type', 'customer_name','customer_id', 'transaction_date','status')->orderByDesc('latest_created_at')->get();
-      
-      //    }
-      // }
       
      
       return $this->paginate($transaction);
@@ -1151,7 +1146,65 @@ class WebController extends Controller{
       ]);
       $resArr['message'] = 'Successfully reversed transaction';
       return response()->json($resArr,200);
-  }
+   }
+
+   public function getInvoicePayment(String $invoice_id){
+     return Payment::where('invoice_no',$invoice_id)->with('admin')->get();
+   }
+
+   public function makePaymentToInvoice(Request $request){
+      $request ->validate([
+         'invoice_number' => 'required',
+         'payment_type' => 'required',
+         'amount' => 'required',
+         'user_id' => 'required',
+         'customer_id' => 'required',
+         'total' => 'required',
+         'details' => 'required'
+      ]);
+
+      $amount_expected = $request->total;
+      //Check total payments
+     
+      
+      $payment = new Payment;
+      $payment->user_id = $request->user_id;
+      $payment->invoice_no = $request->invoice_number;
+      $payment->amount = $request->amount;
+      $payment->type = $request->payment_type;
+      $payment->details = $request->details;
+      $payment->save(); 
+
+
+      //
+      $amount_payed = Payment::where('invoice_no', $request->invoice_number)->sum('amount');
+      $amount_left = $amount_expected  - $amount_payed;
+      if($amount_left == 0){
+         Transaction::where('invoice_no',$request->invoice_number)
+         ->update([
+             'status'=> "paid"
+             ]);
+       
+      } 
+
+      
+      
+
+      $customer = Customer::where('id',$request->customer_id)->first();
+      $previous_balance = $customer->balance;
+      $balance = $previous_balance - $request->amount;
+
+      Customer::where('id', $request->customer_id)
+      ->update([
+          'balance'=> $balance
+          ]);
+
+      $resArr['message'] = 'Successfully created customer';
+      return response()->json($resArr,200);   
+
+
+
+   }
 
    
 

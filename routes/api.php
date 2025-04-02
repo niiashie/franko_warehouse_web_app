@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->post('/updatePendingStockCount',[UserControll
 //API's for web app
 
 Route::post('/web/login',[WebController::class,'login']);
+Route::post('web/register',[WebController::class,'register']);
 Route::middleware('auth:sanctum')->get('web/getDashboardValues/{id}',[WebController::class,'getDashboardValues']);
 Route::middleware('auth:sanctum')->get('web/getCategoryProducts/{category_id}/{warehouse_id}',[WebController::class,'getCategoryProducts']);
 Route::middleware('auth:sanctum')->get('web/getWarehouse',[WebController::class,'getWarehouse']);
@@ -84,4 +85,7 @@ Route::middleware('auth:sanctum')->post('web/makeTransaction',[WebController::cl
 Route::middleware('auth:sanctum')->get('web/getTransactionDetails/{invoice_number}',[WebController::class,'getTransactionDetails']);
 Route::middleware('auth:sanctum')->post('web/assignInvoiceToCustomer',[WebController::class,'assignInvoiceToCustomer']);
 Route::middleware('auth:sanctum')->post('web/reverseTransaction',[WebController::class,'reverseTransaction']);
+Route::middleware('auth:sanctum')->get('web/getInvoicePayment/{invoice_id}',[WebController::class,'getInvoicePayment']);
+Route::middleware('auth:sanctum')->post('web/makePaymentToInvoice',[WebController::class,'makePaymentToInvoice']);
+
 
