@@ -21,6 +21,7 @@ class CreateTransactionsTable extends Migration
             $table->integer('quantity');
             $table->double('value');
             $table->string('invoice_no');
+            $table->string('code');
             $table->string('transaction_date');
             $table->string('transaction_type');
             $table->string('ware_house_name');
